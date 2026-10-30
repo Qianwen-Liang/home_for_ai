@@ -48,6 +48,7 @@ memory/decisions.json
 memory/escalations.json
 memory/cycle_tracker/
 memory/search_cache.json
+memory/experience_learner.json
 memory/safety_data.json
 memory/test_results.json
 
@@ -61,6 +62,8 @@ knowledge/vector_cache.json
 _contract_tmp.txt
 _contract_tmp_dir/
 _ci_clone/
+_ci_verify/
+_ci_*/
 
 # ── 外部数据集（独立仓库，不纳入本仓版本控制）────────────
 research/QuixBugs/

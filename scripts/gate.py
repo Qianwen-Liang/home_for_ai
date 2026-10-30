@@ -77,6 +77,22 @@ def check_g1(full: bool = False) -> dict:
     """测试前后生产数据指纹必须完全一致。"""
     import subprocess
 
+    # ★预热：先 import 核心模块，让其完成首次初始化（这些类会在无文件时
+    # 创建默认状态文件）。否则在干净环境（如 CI 全新 clone）里，"文件从无到有"
+    # 会被误判为测试污染——实际是正常的初始化行为。
+    try:
+        import tools.task_tracker  # noqa: F401
+        import tools.knowledge_store  # noqa: F401
+        import tools.monitor  # noqa: F401
+        from tools.task_tracker import TaskTracker
+        from tools.knowledge_store import KnowledgeStore
+        from tools.monitor import Monitor
+        TaskTracker()
+        KnowledgeStore()
+        Monitor()
+    except Exception:  # noqa: BLE001
+        pass
+
     before = _fingerprint(PROTECTED)
     targets = ["tests/"] if full else ["tests/test_stress.py", "tests/test_e2e_integration.py",
                                        "tests/test_experience_learner.py"]
@@ -293,6 +309,13 @@ def _measure_p50() -> dict[str, float]:
 
     ks = KnowledgeStore()
     queries = ["缓存 优化 性能", "语义检索", "如何设计契约测试"]
+
+    # ★预热：丢弃前 2 轮（首次调用含索引构建、模块导入、文件系统冷缓存）。
+    # 若不预热，干净环境（CI 全新 clone）比本机热态慢 40%+，会误报性能回归。
+    for _ in range(2):
+        for q in queries:
+            ks.search(q, 5, mode="keyword")
+
     samples: dict[str, list[float]] = {q: [] for q in queries}
     for _ in range(PERF_REPEAT):
         for q in queries:
@@ -311,9 +334,11 @@ def check_g4(rebuild: bool = False) -> dict:
     current = _measure_p50()
 
     if rebuild or not PERF_BASELINE.is_file():
+        import platform as _platform
         PERF_BASELINE.write_text(json.dumps({
             "_doc": "G4 性能基线。重建：python scripts/gate.py --baseline G4",
             "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "platform": f"{_platform.system()}-{_platform.python_version()}",
             "metric": "knowledge.keyword_search.p50_s",
             "repeat": PERF_REPEAT,
             "values": current,
@@ -323,6 +348,19 @@ def check_g4(rebuild: bool = False) -> dict:
 
     base = json.loads(PERF_BASELINE.read_text(encoding="utf-8"))
     base_values = base.get("values", {})
+
+    # ★跨平台/跨机器基线不具可比性：不同 OS 的调度、文件系统、CPU 差异
+    # 可达数倍。记录平台，不一致时跳过回归判定并明确提示，而不是误报退化。
+    import platform as _platform
+    cur_platform = f"{_platform.system()}-{_platform.python_version()}"
+    base_platform = base.get("platform")
+    if base_platform and base_platform != cur_platform:
+        return _result(
+            "G4", "性能回归", True,
+            f"跨平台基线不适用（基线 {base_platform} vs 当前 {cur_platform}），已跳过比较；"
+            f"如需在本环境启用，运行 python scripts/gate.py --baseline G4",
+            {"skipped": True, "baseline_platform": base_platform},
+        )
     regressions, ok = [], []
     for q, cur in current.items():
         old = base_values.get(q)
