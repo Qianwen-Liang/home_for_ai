@@ -36,7 +36,8 @@ memory/agents.json
 memory/messages.json
 memory/dispatch.json
 memory/workflows.json
-memory/blackboard/
+memory/blackboard/items.json
+memory/blackboard/.lock
 memory/capsule/
 memory/improvement_*/
 memory/paper_collab_*/
@@ -59,3 +60,7 @@ knowledge/vector_cache.json
 # ── 测试临时产物 ─────────────────────────────────────────
 _contract_tmp.txt
 _contract_tmp_dir/
+_ci_clone/
+
+# ── 外部数据集（独立仓库，不纳入本仓版本控制）────────────
+research/QuixBugs/
