@@ -75,14 +75,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest jsonschema hypothesis
 
-      - name: 运行测试
-        # 已知失败登记在 eval/governance/known_test_failures.json（F1/F2，状态 accepted）。
-        # 此处 deselect 与登记表一一对应；门禁 G3 每次运行都会显示该表，
-        # 确保"接受的失败"是被摆出来的，而不是被藏起来的。
-        run: |
-          python -m pytest tests/ -q \
-            --deselect tests/test_debugger.py::test_auto_fix_network \
-            --deselect tests/test_debugger.py::test_auto_fix_auth
+      - name: 运行测试（带完整性审计）
+        # test_audit.py 会校验"收集数/通过数/跳过数"阈值，防止
+        # "因为没跑所以通过"的假绿——这曾是本 CI 首次全绿时的真实疑点
+        # （600 个用例只用 18 秒，本地需 70 秒）。
+        # 已知失败从 eval/governance/known_test_failures.json 读取，
+        # 保证"CI 排除的"与"正式登记的"永远是同一份清单。
+        run: python scripts/test_audit.py
 
       - name: 已知失败项提醒
         if: always()

@@ -441,6 +441,42 @@ def check_g4(rebuild: bool = False) -> dict:
 
 
 # ══════════════════════════════════════════════════════════
+# G5 测试完整性
+# ══════════════════════════════════════════════════════════
+
+def check_g5() -> dict:
+    """测试收集数不得低于阈值——防止"因为没跑所以通过"的假绿。
+
+    背景：CI 首次全绿时，全量测试只用 18 秒就跑完 600 个用例（本地需 70 秒）。
+    快得不合理可能意味着测试根本没执行。G5 把这种怀疑变成硬断言：
+    收集数低于阈值即红，而不是让一个可能空跑的 CI 给出虚假安全感。
+    """
+    import subprocess
+
+    proc = subprocess.run(
+        [sys.executable, "scripts/test_audit.py", "--quick", "--json"],
+        cwd=str(ROOT), capture_output=True, text=True, errors="replace",
+    )
+    if proc.returncode == 2:
+        return _result("G5", "测试完整性", False,
+                       f"审计脚本执行异常: {(proc.stdout or proc.stderr)[:160]}")
+    try:
+        data = json.loads(proc.stdout)
+    except (json.JSONDecodeError, ValueError):
+        return _result("G5", "测试完整性", False,
+                       f"审计输出无法解析: {(proc.stdout or '')[:160]}")
+
+    counts = data.get("counts", {})
+    problems = data.get("problems", [])
+    passed = bool(data.get("passed"))
+    detail = (f"收集 {counts.get('collected', '?')} 个用例"
+              f"（阈值 {data.get('thresholds', {}).get('min_collected')}）"
+              if passed else "; ".join(problems))
+    return _result("G5", "测试完整性", passed, detail,
+                   {"counts": counts, "problems": problems})
+
+
+# ══════════════════════════════════════════════════════════
 # 入口
 # ══════════════════════════════════════════════════════════
 
@@ -460,10 +496,12 @@ def main() -> int:
         "G2": check_g2,
         "G3": check_g3,
         "G4": lambda: check_g4(rebuild=rebuild_g4),
+        "G5": check_g5,
     }
-    order = ["G4", "G2", "G3", "G1"]
+    order = ["G4", "G5", "G2", "G3", "G1"]
     # ★G4 优先：性能测量对环境最敏感，必须放在 G1（CPU 密集 pytest）之前，
     # 否则紧随其后的测量会同步偏高（实测两查询同时 +29%，误报退化）。
+    # G5（收集数校验，约 2s）紧随其后；G1 最重，放最后。
     if only:
         order = [g for g in order if g in only]
 
