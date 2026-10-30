@@ -1,0 +1,256 @@
+{
+  "timestamp": "2026-08-15 22:21:13",
+  "total": 28,
+  "passed": 28,
+  "failed": 0,
+  "errored": 0,
+  "pass_rate": 1.0,
+  "dimensions": {
+    "L1-代码生成": {
+      "total": 9,
+      "pass": 9
+    },
+    "L2-诊断修复": {
+      "total": 4,
+      "pass": 4
+    },
+    "L3-数据处理": {
+      "total": 6,
+      "pass": 6
+    },
+    "L2-重构": {
+      "total": 4,
+      "pass": 4
+    },
+    "L5-健壮性": {
+      "total": 5,
+      "pass": 5
+    }
+  },
+  "results": [
+    {
+      "task_id": "t01_斐波那契数列",
+      "title": "斐波那契数列",
+      "dimension": "L1-代码生成",
+      "difficulty": "简单",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t02_素数判断",
+      "title": "素数判断",
+      "dimension": "L1-代码生成",
+      "difficulty": "简单",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t03_字符串反转",
+      "title": "字符串反转",
+      "dimension": "L1-代码生成",
+      "difficulty": "简单",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t04_二分查找",
+      "title": "二分查找",
+      "dimension": "L1-代码生成",
+      "difficulty": "中等",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t05_修复除零异常",
+      "title": "修复除零异常",
+      "dimension": "L2-诊断修复",
+      "difficulty": "简单",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t06_修复越界访问",
+      "title": "修复越界访问",
+      "dimension": "L2-诊断修复",
+      "difficulty": "简单",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t07_修复字符串拼接",
+      "title": "修复字符串拼接",
+      "dimension": "L2-诊断修复",
+      "difficulty": "简单",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t08_修复求最大值",
+      "title": "修复求最大值",
+      "dimension": "L2-诊断修复",
+      "difficulty": "简单",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t09_词频统计",
+      "title": "词频统计",
+      "dimension": "L3-数据处理",
+      "difficulty": "中等",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t10_合并有序列表",
+      "title": "合并有序列表",
+      "dimension": "L3-数据处理",
+      "difficulty": "中等",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t11_嵌套字段提取",
+      "title": "嵌套字段提取",
+      "dimension": "L3-数据处理",
+      "difficulty": "中等",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t12_去重保持顺序",
+      "title": "去重保持顺序",
+      "dimension": "L3-数据处理",
+      "difficulty": "简单",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t13_提取魔法常量",
+      "title": "提取魔法常量",
+      "dimension": "L2-重构",
+      "difficulty": "中等",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t14_消除重复逻辑",
+      "title": "消除重复逻辑",
+      "dimension": "L2-重构",
+      "difficulty": "中等",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t15_拆分大函数",
+      "title": "拆分大函数",
+      "dimension": "L2-重构",
+      "difficulty": "较难",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t16_参数对象化",
+      "title": "参数对象化",
+      "dimension": "L2-重构",
+      "difficulty": "较难",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t17_安全除法",
+      "title": "安全除法",
+      "dimension": "L5-健壮性",
+      "difficulty": "简单",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t18_类型校验",
+      "title": "类型校验",
+      "dimension": "L5-健壮性",
+      "difficulty": "简单",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t19_空值处理",
+      "title": "空值处理",
+      "dimension": "L5-健壮性",
+      "difficulty": "简单",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t20_边界条件处理",
+      "title": "边界条件处理",
+      "dimension": "L5-健壮性",
+      "difficulty": "中等",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t21_最长公共子序列",
+      "title": "最长公共子序列",
+      "dimension": "L1-代码生成",
+      "difficulty": "困难",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t22_拓扑排序",
+      "title": "拓扑排序",
+      "dimension": "L1-代码生成",
+      "difficulty": "困难",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t23_全排列生成",
+      "title": "全排列生成",
+      "dimension": "L1-代码生成",
+      "difficulty": "困难",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t24_记忆化装饰器",
+      "title": "记忆化装饰器",
+      "dimension": "L1-代码生成",
+      "difficulty": "困难",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t25_提取数字",
+      "title": "提取数字",
+      "dimension": "L3-数据处理",
+      "difficulty": "困难",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t26_累计平均生成器",
+      "title": "累计平均生成器",
+      "dimension": "L3-数据处理",
+      "difficulty": "困难",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t27_重试机制",
+      "title": "重试机制",
+      "dimension": "L5-健壮性",
+      "difficulty": "困难",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "task_id": "t28_平衡括号判断",
+      "title": "平衡括号判断",
+      "dimension": "L1-代码生成",
+      "difficulty": "困难",
+      "status": "PASS",
+      "detail": ""
+    }
+  ]
+}

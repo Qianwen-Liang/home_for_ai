@@ -1,0 +1,383 @@
+{
+  "_doc": "legacy 工具归档记录。可回滚：将 files[].to 移回 from 并重启。",
+  "executed_at": "2026-10-30 22:05:36",
+  "evidence": "scripts/archive_analyze.py + scripts/dead_code_scan.py + scripts/ref_check.py",
+  "key_finding": "26 个 legacy 工具名对应模块全部被 agent1.py import，属内部子系统而非死代码；物理归档仅对确证零代码引用者执行。",
+  "files": [
+    {
+      "from": "tools/log_rotation.py",
+      "to": "archive/tools/log_rotation.py",
+      "module": "tools.log_rotation",
+      "lines": 145,
+      "reason": "零 import 引用、无 hot_reload 映射、非已知交付物"
+    }
+  ],
+  "kept_with_reason": {
+    "tools.capsule": "T2795 P3 能力交付物，agent1 系统提示词约定调用（文档级引用，非 import）",
+    "village.acp_server": "T2443 ACP 协议对齐交付物",
+    "tools.code_analyzer": "evolver/hot_reload.py 热重载映射表登记"
+  },
+  "classification": {
+    "agent_profile": {
+      "class": "internal_subsystem",
+      "module": "tools.agent_profile",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "tools/specialist_base.py"
+      ],
+      "test_importers": [
+        "tests/test_agent_profile.py"
+      ],
+      "note": ""
+    },
+    "audit_log": {
+      "class": "internal_subsystem",
+      "module": "evolver.audit_log",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "evolver/__init__.py",
+        "evolver/self_healing.py",
+        "evolver/self_improver.py"
+      ],
+      "test_importers": [],
+      "note": ""
+    },
+    "auto_repair": {
+      "class": "internal_subsystem",
+      "module": "tools.auto_repair",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "evolver/self_improver.py",
+        "research/QuixBugs/quixbugs_repair.py"
+      ],
+      "test_importers": [
+        "tests/test_repair_executors.py"
+      ],
+      "note": ""
+    },
+    "blackboard": {
+      "class": "unresolved",
+      "evidence": [],
+      "note": "未定位到同名模块"
+    },
+    "checkpoint": {
+      "class": "internal_subsystem",
+      "module": "tools.checkpoint_manager",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py"
+      ],
+      "test_importers": [
+        "tests/test_checkpoint_backend.py",
+        "tests/test_checkpoint_manager.py",
+        "tests/test_workflow_auto_checkpoint.py"
+      ],
+      "note": ""
+    },
+    "cycle_tracker": {
+      "class": "internal_subsystem",
+      "module": "evolver.cycle_tracker",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "evolver/__init__.py",
+        "evolver/improvement_generator.py",
+        "evolver/self_improver.py"
+      ],
+      "test_importers": [],
+      "note": ""
+    },
+    "decision_engine": {
+      "class": "internal_subsystem",
+      "module": "tools.decision_engine",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "tools/task_tracker.py",
+        "tools/test_tools.py"
+      ],
+      "test_importers": [
+        "tests/test_decision_engine.py",
+        "tests/test_e2e_integration.py",
+        "tests/test_stress.py"
+      ],
+      "note": ""
+    },
+    "effect_evaluator": {
+      "class": "internal_subsystem",
+      "module": "evolver.effect_evaluator",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "evolver/__init__.py",
+        "evolver/self_improver.py"
+      ],
+      "test_importers": [],
+      "note": ""
+    },
+    "env_awareness": {
+      "class": "internal_subsystem",
+      "module": "evolver.env_awareness",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "evolver/__init__.py"
+      ],
+      "test_importers": [],
+      "note": ""
+    },
+    "evolution_strategy": {
+      "class": "internal_subsystem",
+      "module": "evolver.evolution_strategy",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "evolver/__init__.py",
+        "evolver/self_improver.py"
+      ],
+      "test_importers": [],
+      "note": ""
+    },
+    "file_utils": {
+      "class": "internal_subsystem",
+      "module": "tools.file_utils",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "tools/test_tools.py"
+      ],
+      "test_importers": [],
+      "note": ""
+    },
+    "health_dashboard": {
+      "class": "internal_subsystem",
+      "module": "evolver.health_dashboard",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "evolver/__init__.py",
+        "evolver/effect_evaluator.py",
+        "evolver/env_awareness.py",
+        "evolver/self_healing.py",
+        "evolver/self_improver.py"
+      ],
+      "test_importers": [],
+      "note": ""
+    },
+    "improvement_generator": {
+      "class": "internal_subsystem",
+      "module": "evolver.improvement_generator",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "evolver/__init__.py",
+        "evolver/self_improver.py"
+      ],
+      "test_importers": [],
+      "note": ""
+    },
+    "monitor": {
+      "class": "internal_subsystem",
+      "module": "tools.monitor",
+      "live_importers": [
+        "agent1.py",
+        "eval/governance/_verify_monitor_bridge.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "evolver/effect_evaluator.py",
+        "evolver/health_dashboard.py",
+        "evolver/improvement_generator.py",
+        "evolver/self_healing.py",
+        "evolver/self_improver.py",
+        "evolver/usage_analyzer.py",
+        "tools/middleware.py",
+        "tools/test_tools.py",
+        "tools/villager.py"
+      ],
+      "test_importers": [
+        "tests/test_e2e_integration.py",
+        "tests/test_monitor.py",
+        "tests/test_stress.py"
+      ],
+      "note": ""
+    },
+    "offline": {
+      "class": "internal_subsystem",
+      "module": "tools.offline_runner",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py"
+      ],
+      "test_importers": [
+        "tests/test_offline_runner.py",
+        "tests/test_repair_executors.py"
+      ],
+      "note": ""
+    },
+    "offline_research": {
+      "class": "unresolved",
+      "evidence": [],
+      "note": "未定位到同名模块"
+    },
+    "orchestrator": {
+      "class": "internal_subsystem",
+      "module": "tools.orchestrator",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py"
+      ],
+      "test_importers": [
+        "tests/test_orchestrator.py"
+      ],
+      "note": ""
+    },
+    "safety_net": {
+      "class": "internal_subsystem",
+      "module": "tools.safety_net",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "evolver/effect_evaluator.py",
+        "evolver/health_dashboard.py",
+        "evolver/self_healing.py",
+        "evolver/self_improver.py",
+        "tools/test_tools.py"
+      ],
+      "test_importers": [
+        "tests/test_e2e_integration.py",
+        "tests/test_safety_net.py",
+        "tests/test_stress.py"
+      ],
+      "note": ""
+    },
+    "self_healing": {
+      "class": "internal_subsystem",
+      "module": "evolver.self_healing",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "evolver/__init__.py"
+      ],
+      "test_importers": [],
+      "note": ""
+    },
+    "self_improver": {
+      "class": "internal_subsystem",
+      "module": "evolver.self_improver",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "evolver/__init__.py"
+      ],
+      "test_importers": [],
+      "note": ""
+    },
+    "specialist": {
+      "class": "internal_subsystem",
+      "module": "tools.specialist_base",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "evolver/.deploy_backups/20261030_115143_test_evolver_agent.py",
+        "tools/orchestrator.py",
+        "tools/village_chat.py"
+      ],
+      "test_importers": [
+        "tests/test_debugger.py",
+        "tests/test_evolver_agent.py",
+        "tests/test_multi_agent_integration.py",
+        "tests/test_specialist_base.py"
+      ],
+      "note": ""
+    },
+    "task_dispatcher": {
+      "class": "internal_subsystem",
+      "module": "tools.task_dispatcher",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "tools/orchestrator.py"
+      ],
+      "test_importers": [
+        "tests/test_e2e_integration.py",
+        "tests/test_task_dispatcher.py"
+      ],
+      "note": ""
+    },
+    "tech_radar": {
+      "class": "internal_subsystem",
+      "module": "evolver.tech_radar",
+      "live_importers": [
+        "agent1.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "evolver/__init__.py",
+        "evolver/env_awareness.py"
+      ],
+      "test_importers": [],
+      "note": ""
+    },
+    "usage_analyzer": {
+      "class": "internal_subsystem",
+      "module": "evolver.usage_analyzer",
+      "live_importers": [
+        "agent1.py",
+        "eval/governance/_verify_monitor_bridge.py",
+        "evolver/.deploy_backups/20260726_015327_agent1.py",
+        "evolver/.deploy_backups/20260726_015543_agent1.py",
+        "evolver/__init__.py",
+        "evolver/env_awareness.py"
+      ],
+      "test_importers": [],
+      "note": ""
+    },
+    "village_chat": {
+      "class": "internal_subsystem",
+      "module": "tools.village_chat",
+      "live_importers": [
+        "agent1.py"
+      ],
+      "test_importers": [],
+      "note": ""
+    },
+    "villager": {
+      "class": "internal_subsystem",
+      "module": "tools.villager",
+      "live_importers": [
+        "agent1.py",
+        "village/acp_server.py"
+      ],
+      "test_importers": [],
+      "note": ""
+    },
+    "tools.log_rotation": {
+      "class": "archived",
+      "module": "tools.log_rotation",
+      "live_importers": [],
+      "note": "零 import 引用、无 hot_reload 映射、非已知交付物"
+    }
+  },
+  "restore_hint": "python scripts/archive_execute.py --restore（见下）"
+}

@@ -1,0 +1,154 @@
+{
+  "mode": "no_rewrite",
+  "agg": {
+    "queries": 14,
+    "P@k": 0.9286,
+    "Noise@k": 0.0,
+    "MRR": 0.9286,
+    "Hit@k": 0.9286,
+    "avg_ms": 1802,
+    "errors": 0
+  },
+  "per_query": [
+    {
+      "id": "T01",
+      "query": "context engineering agents",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 2682,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T02",
+      "query": "attention budget context rot",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1809,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T03",
+      "query": "progressive disclosure tool loading",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1587,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T04",
+      "query": "code execution mode agents",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1562,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T05",
+      "query": "arXiv 2608.25512",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1594,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T06",
+      "query": "all-MiniLM-L6-v2 sentence transformers",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 2237,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T07",
+      "query": "deepseek-v4.1-flash model",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1730,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T08",
+      "query": "TS-999 error code",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1638,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T09",
+      "query": "DeepSeek Harness",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1577,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T10",
+      "query": "Model Context Protocol specification",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1819,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T11",
+      "query": "Anthropic Claude Code best practices",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1549,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T12",
+      "query": "LangChain retrieval agent",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1561,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T13",
+      "query": "检索增强生成 混合检索 BM25",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1985,
+      "err": "",
+      "n": 4
+    },
+    {
+      "id": "T14",
+      "query": "大模型 上下文工程 注意力预算",
+      "p@k": 0.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 1893,
+      "err": "",
+      "n": 1
+    }
+  ]
+}

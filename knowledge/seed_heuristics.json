@@ -1,0 +1,98 @@
+[
+  {
+    "title": "如何安全地修改代码（可回滚进化流程）",
+    "content": "修改前先用 effect_evaluator.snapshot() 拍基线快照；修改后依次跑 test_runner、self_check、safe_deploy（测试失败自动回滚）；再用 effect_evaluator.evaluate() 对比前后指标，仅当 verdict=improved 才保留改动；全程用 audit_log.log() 记录决策与理由。",
+    "category": "evolution",
+    "tags": ["进化", "安全", "回滚", "代码修改"],
+    "kind": "procedural",
+    "semantic_tags": ["method", "rollback", "safety"]
+  },
+  {
+    "title": "如何排查模块导入失败",
+    "content": "遇到 import error / module not found 时：先运行 self_check(scope=tools) 定位坏模块；再用 read_file 查看该模块顶部 import 是否引用了不存在或已改名的类；检查文件是否在 tools/ 目录且 __init__.py 已导出；最后用 python -c 'import <module>' 单独验证。",
+    "category": "debugging",
+    "tags": ["导入", "排查", "import", "调试"],
+    "kind": "procedural",
+    "semantic_tags": ["method", "debug"]
+  },
+  {
+    "title": "如何编排多 Agent 协同",
+    "content": "先用 orchestrator action=run 把高层任务分解为子任务并自动分配到最合适的 Specialist（researcher→designer→writer→reviewer）；需要人工把关的节点用 request_approval 挂起；用 blackboard 在 Agent 间共享中间产物；最后用 reviewer 做交付前质量审查。",
+    "category": "multi-agent",
+    "tags": ["多智能体", "编排", "orchestrator", "协同"],
+    "kind": "procedural",
+    "semantic_tags": ["method", "orchestration"]
+  },
+  {
+    "title": "如何做性能分析与优化",
+    "content": "用 monitor action=report 看调用频次、平均响应与错误统计；用 usage_analyzer action=bottlenecks 识别 >500ms 的慢工具；用 effect_evaluator 的导入耗时指标定位冷启动瓶颈；优化后必须重新跑 test_runner 确认无回归。",
+    "category": "performance",
+    "tags": ["性能", "优化", "监控", "瓶颈"],
+    "kind": "procedural",
+    "semantic_tags": ["method", "performance"]
+  },
+  {
+    "title": "如何打破循环与自救",
+    "content": "连续相同错误或重复无进展时：先读 supervision/clue.md 获取监护人线索；再用 safety_net action=check 检测是否陷入循环；必要时 safety_net action=activate_rescue 触发自救；记录事件到 safety_net 以便回溯。",
+    "category": "self-rescue",
+    "tags": ["循环", "自救", "clue", "safety_net"],
+    "kind": "procedural",
+    "semantic_tags": ["method", "rescue"]
+  },
+  {
+    "title": "如何沉淀高价值经验",
+    "content": "完成任务或踩坑后，用 knowledge action=store 记录，区分 kind：事实类用 declarative、可复用方法用 procedural、失效边界用 boundary；semantic_tags 标注 method/pitfall/lesson/benchmark；标题用动词短语便于后续检索命中。",
+    "category": "knowledge",
+    "tags": ["知识", "经验", "沉淀", "knowledge"],
+    "kind": "procedural",
+    "semantic_tags": ["method", "knowledge"]
+  },
+  {
+    "title": "语义搜索在 sentence-transformers 缺失时静默降级",
+    "content": "条件：环境中未安装 sentence-transformers。失效表现：knowledge 的 mode=semantic 会返回『不可用，已回退关键词搜索』，mode=auto 静默退化为纯关键词，语义理解能力丧失但不会报错。规避：需要语义能力时先确认依赖已安装，或显式使用 mode=keyword 避免误判。",
+    "category": "knowledge",
+    "tags": ["语义搜索", "降级", "依赖", "边界"],
+    "kind": "boundary",
+    "semantic_tags": ["pitfall", "boundary"]
+  },
+  {
+    "title": "run_command 超时可能不清理子进程树",
+    "content": "条件：命令执行超时被强杀。失效表现：子进程可能残留、占用资源，后续命令受影响。规避：长任务优先用 offline 工具提交后台任务并设置检查点；对可能超时的命令显式传 timeout 并做幂等设计。",
+    "category": "command",
+    "tags": ["超时", "进程", "清理", "边界"],
+    "kind": "boundary",
+    "semantic_tags": ["pitfall", "boundary"]
+  },
+  {
+    "title": "中文分词 jieba 缺失时回退到正则切分",
+    "content": "条件：未安装 jieba。失效表现：中文查询按空格/标点切分，长词无法命中，中文检索精度下降但不会报错。规避：中文知识检索场景确认 jieba 已安装，或用英文关键词补充。",
+    "category": "knowledge",
+    "tags": ["中文", "jieba", "分词", "边界"],
+    "kind": "boundary",
+    "semantic_tags": ["pitfall", "boundary"]
+  },
+  {
+    "title": "effect_evaluator 的知识条目计数可能读取错误的内部属性名",
+    "content": "条件：knowledge_store 内部属性名变更（如 _entries vs _data）。失效表现：knowledge_entries 指标恒为 0，无法反映真实条目数。规避：改动 knowledge_store 内部结构时同步更新 effect_evaluator 的采集代码。",
+    "category": "evaluation",
+    "tags": ["评估", "指标", "属性名", "边界"],
+    "kind": "boundary",
+    "semantic_tags": ["pitfall", "boundary"]
+  },
+  {
+    "title": "GitHub raw 域名可能被网络策略阻断而 API 可达",
+    "content": "条件：沙箱网络对 raw.githubusercontent.com 阻断。失效表现：直接 curl raw 文件超时，但 api.github.com 正常。规避：优先用 GitHub API 的 contents/readme 端点（base64 内容）代替 raw 直连。",
+    "category": "network",
+    "tags": ["网络", "GitHub", "raw", "边界"],
+    "kind": "boundary",
+    "semantic_tags": ["pitfall", "boundary"]
+  },
+  {
+    "title": "Windows shell 把分号当命令参数而非分隔符",
+    "content": "条件：在 Windows 环境下用 ';' 连接多条命令。失效表现：curl/python 报『option -c』或参数解析错误。规避：多条命令用 '&&' 连接，或拆分为独立 run_command 调用。",
+    "category": "command",
+    "tags": ["Windows", "shell", "分隔符", "边界"],
+    "kind": "boundary",
+    "semantic_tags": ["pitfall", "boundary"]
+  }
+]

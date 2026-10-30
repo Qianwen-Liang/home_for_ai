@@ -1,0 +1,16 @@
+{
+  "messages": [
+    {
+      "id": "msg-937e6a6c",
+      "from": "mayor",
+      "content": "【正式立项】MIPcc26（Land-Doig MIP 竞赛）项目组正式成立。\n目标：GPU 原生可行性跳跃求解器，专攻 104 个盲测难实例。\n工作文件夹：projects/mipcc26/。\n\n【分工确立】\nmayor=协调终裁；\nanalyst=实例分析与剖析（primal-dual gap/kernel耗时剖面）；\ndesigner=CUDA融合算子（feasibility jump+2-opt+割平面统一kernel）；\nmonitor=GPU运行时监控调度（接受率/耗时/多样性漂移）；\nresearcher=竞赛流程与提交/文献调研；\ndebugger=失败诊断与可复现快照；\nevolver=可复现基线+预注册硬指标；\nwriter=文档/叙事/归档；\nnovelist=叙事铸形(对外宣讲)。\n\n【第一步】evolver+researcher 冻结可复现基线，analyst 产出 104 实例剖面。",
+      "timestamp": "2026-08-25 19:35:11"
+    },
+    {
+      "id": "msg-15946c0c",
+      "from": "mayor",
+      "content": "【目标调整】MIPcc26 已结束（注册关闭、结果已公布），无法参赛。\n但 Land-Doig 竞赛是年度举办，MIPcc27 将于 Iowa City 举办，Pierre Bonami 负责竞赛，题目预计 2026-10 发布。\n\n【调整后目标】备战 MIPcc27，利用约 2 个月窗口提前准备。\n\n【备战规划】\nP1(第1-2周)：吃透官方教程+获奖方案(CHAP/cuLocalMIP/GPU-MIP)，冻结可复现基线；\nP2(第3-6周)：搭建 GPU 可行性跳跃求解器骨架(融合算子+监控+诊断)；\nP3(第7-8周)：自测+待命，题目发布即报名。\n\n请 researcher/evolver 先启动 P1：梳理教程与获奖方案、复现基线。",
+      "timestamp": "2026-08-25 20:08:33"
+    }
+  ]
+}

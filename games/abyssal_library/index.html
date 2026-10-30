@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深渊图书馆 - The Abyssal Library</title>
+<style>
+:root {
+  --bg: #1a1a2e;
+  --panel: #16213e;
+  --text: #e0d5c1;
+  --gold: #c9a96e;
+  --red: #8b3a3a;
+  --blue: #4a7c96;
+  --green: #5a8a6a;
+  --dark: #0f0f1a;
+  --border: #2a2a4a;
+  --highlight: #f0d78c;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Georgia', 'Noto Serif SC', serif;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-image: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a15 100%);
+}
+
+#game-container {
+  width: 100%;
+  max-width: 780px;
+  min-height: 100vh;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 标题栏 */
+#title-bar {
+  text-align: center;
+  padding: 30px 20px 15px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 15px;
+}
+#title-bar h1 {
+  font-size: 2em;
+  color: var(--gold);
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 20px rgba(201,169,110,0.3);
+  margin-bottom: 5px;
+}
+#title-bar .subtitle {
+  font-size: 0.85em;
+  color: #6a6a8a;
+  font-style: italic;
+}
+
+/* 属性面板 */
+#stats-panel {
+  display: flex;
+  justify-content: space-around;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 15px;
+  margin-bottom: 18px;
+  gap: 10px;
+}
+.stat {
+  text-align: center;
+  flex: 1;
+}
+.stat-icon { font-size: 1.3em; }
+.stat-label { font-size: 0.7em; color: #8a8a9a; text-transform: uppercase; letter-spacing: 0.1em; }
+.stat-value { font-size: 1.4em; font-weight: bold; color: var(--highlight); }
+.stat-bar {
+  height: 4px;
+  background: var(--dark);
+  border-radius: 2px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+.stat-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+#sanity-bar .stat-bar-fill { background: linear-gradient(90deg, #8b3a3a, #c96a5a); }
+#knowledge-bar .stat-bar-fill { background: linear-gradient(90deg, #4a7c96, #6ab8d6); }
+#bookmark-bar .stat-bar-fill { background: linear-gradient(90deg, #5a8a6a, #8aca8a); }
+
+/* 故事面板 */
+#story-panel {
+  flex: 1;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 25px 28px;
+  margin-bottom: 18px;
+  line-height: 1.85;
+  font-size: 1.05em;
+  min-height: 220px;
+  position: relative;
+  overflow-y: auto;
+  max-height: 420px;
+}
+#story-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 60px;
+  background: linear-gradient(to bottom, var(--panel), transparent);
+  border-radius: 8px 8px 0 0;
+  pointer-events: none;
+  z-index: 1;
+}
+#scene-title {
+  color: var(--gold);
+  font-size: 1.3em;
+  margin-bottom: 12px;
+  text-align: center;
+  letter-spacing: 0.05em;
+}
+#narrative {
+  color: var(--text);
+  white-space: pre-wrap;
+}
+.effect-text {
+  color: #8a8a9a;
+  font-style: italic;
+  font-size: 0.9em;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dotted var(--border);
+}
+
+/* 选择面板 */
+#choices-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.choice-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 14px 20px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+.choice-btn:hover {
+  border-color: var(--gold);
+  color: var(--highlight);
+  background: #1e2a40;
+  transform: translateX(4px);
+  box-shadow: 0 0 15px rgba(201,169,110,0.1);
+}
+.choice-btn:active {
+  transform: scale(0.98);
+}
+.choice-btn .choice-hint {
+  display: block;
+  font-size: 0.75em;
+  color: #6a6a8a;
+  margin-top: 3px;
+  font-style: italic;
+}
+
+/* 日志区 */
+#log-panel {
+  background: var(--dark);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 15px;
+  margin-bottom: 15px;
+  max-height: 100px;
+  overflow-y: auto;
+  font-size: 0.78em;
+  color: #6a6a8a;
+}
+#log-panel .log-entry {
+  padding: 2px 0;
+  border-bottom: 1px solid #1a1a2a;
+}
+#log-panel .log-entry:last-child { border-bottom: none; }
+
+/* 底部 */
+#footer-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 0.75em;
+  color: #4a4a6a;
+}
+#footer-bar button {
+  background: transparent;
+  border: 1px solid #3a3a5a;
+  color: #6a6a8a;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9em;
+  transition: all 0.2s;
+}
+#footer-bar button:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* 结局画面 */
+#ending-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+}
+#ending-overlay.active { display: flex; }
+#ending-card {
+  background: var(--panel);
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+  padding: 40px;
+  max-width: 550px;
+  text-align: center;
+  box-shadow: 0 0 60px rgba(201,169,110,0.2);
+}
+#ending-card h2 {
+  color: var(--gold);
+  font-size: 2em;
+  margin-bottom: 15px;
+  letter-spacing: 0.1em;
+}
+#ending-card .ending-type {
+  color: #8a8a9a;
+  font-size: 0.85em;
+  margin-bottom: 15px;
+}
+#ending-card p {
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+#ending-card button {
+  background: var(--gold);
+  color: var(--dark);
+  border: none;
+  padding: 12px 30px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 1em;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: bold;
+}
+#ending-card button:hover {
+  background: var(--highlight);
+  box-shadow: 0 0 20px rgba(201,169,110,0.4);
+}
+
+/* 响应式 */
+@media (max-width: 600px) {
+  #title-bar h1 { font-size: 1.4em; }
+  #story-panel { padding: 18px; font-size: 0.95em; max-height: 300px; }
+  .choice-btn { padding: 12px 15px; font-size: 0.9em; }
+  #ending-card { padding: 25px; }
+}
+</style>
+</head>
+<body>
+
+<div id="game-container">
+  <div id="title-bar">
+    <h1>📚 深渊图书馆</h1>
+    <div class="subtitle">The Abyssal Library — 一部交互式文字冒险</div>
+  </div>
+
+  <div id="stats-panel">
+    <div class="stat" id="sanity-stat">
+      <div class="stat-icon">🧠</div>
+      <div class="stat-label">理智</div>
+      <div class="stat-value" id="sanity-val">100</div>
+      <div class="stat-bar" id="sanity-bar"><div class="stat-bar-fill" style="width:100%"></div></div>
+    </div>
+    <div class="stat" id="knowledge-stat">
+      <div class="stat-icon">📖</div>
+      <div class="stat-label">知识</div>
+      <div class="stat-value" id="knowledge-val">0</div>
+      <div class="stat-bar" id="knowledge-bar"><div class="stat-bar-fill" style="width:0%"></div></div>
+    </div>
+    <div class="stat" id="bookmark-stat">
+      <div class="stat-icon">🔖</div>
+      <div class="stat-label">书签</div>
+      <div class="stat-value" id="bookmark-val">0</div>
+      <div class="stat-bar" id="bookmark-bar"><div class="stat-bar-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div id="story-panel">
+    <div id="scene-title"></div>
+    <div id="narrative"></div>
+  </div>
+
+  <div id="choices-panel"></div>
+
+  <div id="log-panel"></div>
+
+  <div id="footer-bar">
+    <span>场景: <span id="scene-counter">1</span> | 步数: <span id="step-counter">0</span></span>
+    <button onclick="restartGame()">🔄 重新开始</button>
+  </div>
+</div>
+
+<div id="ending-overlay">
+  <div id="ending-card">
+    <h2 id="ending-title"></h2>
+    <div class="ending-type" id="ending-type"></div>
+    <p id="ending-description"></p>
+    <p style="font-size:0.85em;color:#6a6a8a;" id="ending-stats"></p>
+    <button onclick="restartGame()">🔄 再次进入图书馆</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 深渊图书馆 — 游戏引擎
+// ============================================================
+
+const player = {
+  sanity: 100,
+  knowledge: 0,
+  bookmarks: 0,
+  visitedScenes: new Set(),
+  flags: {},
+  stepCount: 0,
+  sceneCount: 0
+};
+
+const SCENES = {};
+const ENDINGS = {};
+let currentSceneId = 'entrance';
+
+// --- 工具函数 ---
+function r(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function addLog(msg) {
+  const lp = document.getElementById('log-panel');
+  lp.innerHTML += `<div class="log-entry">📜 ${msg}</div>`;
+  lp.scrollTop = lp.scrollHeight;
+}
+
+// --- 属性修改 ---
+function modSanity(delta) {
+  const prev = player.sanity;
+  player.sanity = clamp(player.sanity + delta, 0, 100);
+  updateStats();
+  if (delta < -5) addLog(`理智 ${delta} — 你感到一阵眩晕...`);
+  if (delta > 5) addLog(`理智 +${delta} — 你重新找回了镇定。`);
+  if (player.sanity <= 0 && prev > 0) {
+    setTimeout(() => triggerEnding('mad_scholar'), 800);
+  }
+}
+function modKnowledge(delta) {
+  player.knowledge = clamp(player.knowledge + delta, 0, 100);
+  updateStats();
+  if (delta > 5) addLog(`知识 +${delta} — 新的认知在脑海中浮现。`);
+}
+function modBookmarks(delta) {
+  player.bookmarks = Math.max(0, player.bookmarks + delta);
+  updateStats();
+  if (delta > 0) addLog(`🔖 获得书签！当前: ${player.bookmarks}`);
+}
+
+// --- 标记 ---
+function setFlag(f) { player.flags[f] = true; }
+function hasFlag(f) { return player.flags[f] === true; }
+function visited(sceneId) { return player.visitedScenes.has(sceneId); }
+
+// --- UI 更新 ---
+function updateStats() {
+  document.getElementById('sanity-val').textContent = player.sanity;
+  document.getElementById('knowledge-val').textContent = player.knowledge;
+  document.getElementById('bookmark-val').textContent = player.bookmarks;
+  document.getElementById('sanity-bar').querySelector('.stat-bar-fill').style.width = player.sanity + '%';
+  document.getElementById('knowledge-bar').querySelector('.stat-bar-fill').style.width = player.knowledge + '%';
+  document.getElementById('bookmark-bar').querySelector('.stat-bar-fill').style.width = (player.bookmarks * 10) + '%';
+  document.getElementById('step-counter').textContent = player.stepCount;
+  document.getElementById('scene-counter').textContent = player.sceneCount;
+}
+
+function renderScene(scene) {
+  document.getElementById('scene-title').textContent = scene.title;
+  let narrative = scene.text;
+  
+  // 处理条件文本
+  if (scene.condText) {
+    for (const [flag, txt] of Object.entries(scene.condText)) {
+      if (hasFlag(flag)) narrative += '\n\n' + txt;
+    }
+  }
+  
+  document.getElementById('narrative').innerHTML = narrative.replace(/\n/g, '<br>');
+  
+  const cp = document.getElementById('choices-panel');
+  cp.innerHTML = '';
+  
+  let choices = scene.choices.filter(c => {
+    if (c.requireFlag && !hasFlag(c.requireFlag)) return false;
+    if (c.requireMinSanity && player.sanity < c.requireMinSanity) return false;
+    if (c.requireMinKnowledge && player.knowledge < c.requireMinKnowledge) return false;
+    if (c.requireMinBookmarks && player.bookmarks < c.requireMinBookmarks) return false;
+    if (c.requireMaxSanity && player.sanity > c.requireMaxSanity) return false;
+    return true;
+  });
+  
+  choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = c.label + (c.hint ? `<span class="choice-hint">${c.hint}</span>` : '');
+    btn.addEventListener('click', () => {
+      player.stepCount++;
+      if (c.effects) c.effects();
+      if (c.setFlag) setFlag(c.setFlag);
+      if (c.nextScene) {
+        navigateTo(c.nextScene);
+      } else if (c.ending) {
+        triggerEnding(c.ending);
+      }
+    });
+    cp.appendChild(btn);
+  });
+  
+  if (choices.length === 0) {
+    cp.innerHTML = '<div style="color:#8a8a9a;text-align:center;padding:20px;">前方无路可走...图书馆将你吞噬。</div>';
+    setTimeout(() => triggerEnding('lost'), 2000);
+  }
+  
+  updateStats();
+}
+
+function navigateTo(sceneId) {
+  player.visitedScenes.add(sceneId);
+  player.sceneCount++;
+  currentSceneId = sceneId;
+  renderScene(SCENES[sceneId]);
+}
+
+function triggerEnding(endingId) {
+  const e = ENDINGS[endingId];
+  if (!e) return;
+  document.getElementById('ending-title').textContent = e.title;
+  document.getElementById('ending-type').textContent = e.type;
+  document.getElementById('ending-description').textContent = e.text;
+  document.getElementById('ending-stats').textContent = 
+    `理智: ${player.sanity} | 知识: ${player.knowledge} | 书签: ${player.bookmarks} | 步数: ${player.stepCount} | 场景: ${player.sceneCount}`;
+  document.getElementById('ending-overlay').classList.add('active');
+  addLog(`🎭 结局: ${e.title}`);
+}
+
+function restartGame() {
+  player.sanity = 100;
+  player.knowledge = 0;
+  player.bookmarks = 0;
+  player.visitedScenes = new Set();
+  player.flags = {};
+  player.stepCount = 0;
+  player.sceneCount = 0;
+  document.getElementById('ending-overlay').classList.remove('active');
+  document.getElementById('log-panel').innerHTML = '';
+  currentSceneId = 'entrance';
+  navigateTo('entrance');
+  addLog('📚 你再次踏入深渊图书馆...');
+}
+
+// ============================================================
+// 场景定义
+// ============================================================
+
+SCENES.entrance = {
+  title: '📯 入口大厅',
+  text: '你推开沉重的橡木大门，踏入这座传说中的"深渊图书馆"。\n\n高耸的穹顶消失在黑暗之中，烛台发出微弱的暖黄色光芒，照亮了无穷无尽的书架——它们向四面八方延伸，仿佛没有尽头。空气中弥漫着旧书页和皮革封面的气味。\n\n你是一名学者。多年来，你追寻着关于这座图书馆的传说：它收藏了世间一切知识，却也囚禁了所有试图窥探其秘密的人。\n\n正前方是一扇巨大的彩绘玻璃窗，描绘着一棵根系深扎于黑暗中的知识之树。左手边是通往"哲学区"的拱门，右手边的走廊通向"星图室"。一道螺旋楼梯向下延伸，通往未知的深处。\n\n你深吸一口气。知识的诱惑与未知的恐惧在心中交织。',
+  choices: [
+    {
+      label: '📖 走向哲学区——古老的智慧在召唤',
+      hint: '知识+10',
+      effects: () => { modKnowledge(10); },
+      nextScene: 'philosophy'
+    },
+    {
+      label: '⭐ 前往星图室——探索宇宙的奥秘',
+      hint: '知识+5，理智-5',
+      effects: () => { modKnowledge(5); modSanity(-5); },
+      nextScene: 'star_chart'
+    },
+    {
+      label: '🌀 沿螺旋楼梯向下——追寻更深层的秘密',
+      hint: '理智-10',
+      effects: () => { modSanity(-10); },
+      nextScene: 'spiral_staircase'
+    },
+    {
+      label: '🔍 仔细检查入口大厅——也许有隐藏的线索',
+      hint: '可能找到书签',
+      effects: () => {
+        if (!hasFlag('found_entrance_bookmark')) {
+          setFlag('found_entrance_bookmark');
+          modBookmarks(1);
+          addLog('你在彩绘玻璃窗下的石板缝隙中发现了一枚古老的铜质书签。');
+        } else {
+          addLog('你已经仔细检查过这里了。');
+        }
+      },
+      nextScene: 'entrance'
+    }
+  ]
+};
+
+SCENES.philosophy = {
+  title: '📜 哲学区',
+  text: '哲学区的书架由深色橡木制成，每一本书的脊背都烙印着金色的符号。这里收藏着从古至今所有哲学家的著作——苏格拉底、庄子、尼采、还有你从未听说过的名字。\n\n空气中弥漫着一种沉静的智慧。但在书架深处，你注意到一个被锁链缠绕的阅览台，上面摊开着一本散发着微弱蓝光的书。锁链上刻着警告："真理之重，非心灵薄弱者可承。"',
+  choices: [
+    {
+      label: '📗 阅读一本柏拉图的著作——寻求理性的慰藉',
+      hint: '知识+15，理智+10',
+      effects: () => { modKnowledge(15); modSanity(10); },
+      nextScene: 'philosophy_after'
+    },
+    {
+      label: '🔮 尝试阅读被锁链束缚的"真理之书"',
+      hint: '知识+25，理智-20（需要理智≥30）',
+      requireMinSanity: 30,
+      effects: () => { modKnowledge(25); modSanity(-20); setFlag('read_truth_book'); },
+      nextScene: 'philosophy_after'
+    },
+    {
+      label: '🚶 回到入口大厅',
+      effects: () => {},
+      nextScene: 'entrance'
+    }
+  ]
+};
+
+SCENES.philosophy_after = {
+  title: '📜 哲学区·深处',
+  text: hasFlag('read_truth_book')
+    ? '真理之书的内容在你脑海中燃烧。你读到了关于"图书馆本质"的片段——它不是一个地方，而是一种存在状态。所有知识同时存在于此，过去、现在、未来交织在一起。你感到自己的意识被拉伸到了极限，但同时也获得了前所未有的洞察。\n\n在书架尽头，你注意到一道暗门，上面刻着"索引大厅"。'
+    : '翻阅完经典著作后，你感到心境平和。哲学区的灯光似乎比刚才更亮了一些。你在书架间漫步时，发现了一扇隐藏的暗门，上面刻着"索引大厅"。',
+  choices: [
+    {
+      label: '🚪 进入索引大厅',
+      effects: () => {},
+      nextScene: 'index_hall'
+    },
+    {
+      label: '🚶 返回入口大厅',
+      effects: () => {},
+      nextScene: 'entrance'
+    }
+  ]
+};
+
+SCENES.star_chart = {
+  title: '🌌 星图室',
+  text: '星图室是一个巨大的圆形房间，穹顶上镶嵌着数以万计的发光晶体，模拟着某种未知的星空。墙壁上挂满了星图——不是地球上的星座，而是你从未见过的天体排列。\n\n房间中央有一座黄铜制的地球仪大小的天体模型，缓缓旋转着。走近细看，你发现那不是模型，而是一个微缩的、正在实时演化的宇宙。\n\n一位身着深蓝长袍的老者坐在角落里，正在用羽毛笔绘制星图。他抬起头，用深邃的目光看着你。"又一位追寻者，"他说，"你看得见宇宙的真相吗？"',
+  choices: [
+    {
+      label: '🌠 与老者交谈，请求他解读星图',
+      hint: '知识+10，获得书签',
+      effects: () => {
+        modKnowledge(10);
+        if (!hasFlag('astronomer_bookmark')) {
+          setFlag('astronomer_bookmark');
+          modBookmarks(1);
+        }
+        setFlag('talked_to_astronomer');
+      },
+      nextScene: 'star_chart_talk'
+    },
+    {
+      label: '🔭 自行研究微缩宇宙模型',
+      hint: '知识+15，理智-10',
+      effects: () => { modKnowledge(15); modSanity(-10); setFlag('studied_cosmos'); },
+      nextScene: 'star_chart_after'
+    },
+    {
+      label: '🚶 返回入口大厅',
+      effects: () => {},
+      nextScene: 'entrance'
+    }
+  ]
+};
+
+SCENES.star_chart_talk = {
+  title: '🌌 星图室·老者的启示',
+  text: '老者放下羽毛笔，指向穹顶。"这不是星空，这是图书馆本身的结构图。每一颗星代表一个知识领域，每一条连线代表它们之间的关联。"他指向一颗暗红色的星："那是你来的地方——入口大厅。"又指向最底部一颗几乎看不见的黑星："那是深渊底层。极少有人到达那里，更少有人回来。"\n\n他递给你一枚星形书签。"拿着这个。在需要的时候，它会指引你找到回来的路。"',
+  choices: [
+    {
+      label: '🙏 感谢老者，继续探索',
+      effects: () => {},
+      nextScene: 'star_chart_after'
+    }
+  ]
+};
+
+SCENES.star_chart_after = {
+  title: '🌌 星图室·出口',
+  text: '你在星图室的收获让你对图书馆有了新的理解。现在你可以选择继续深入，或返回安全的大厅。',
+  choices: [
+    {
+      label: '🌊 前往寂静回廊',
+      effects: () => { modSanity(-5); },
+      nextScene: 'silent_corridor'
+    },
+    {
+      label: '🚶 返回入口大厅',
+      effects: () => {},
+      nextScene: 'entrance'
+    }
+  ]
+};
+
+SCENES.spiral_staircase = {
+  title: '🌀 螺旋楼梯',
+  text: '螺旋楼梯沿着巨大的中空竖井蜿蜒而下。扶手是锻铁制成的，上面爬满了发光的藤蔓植物，它们的荧光是唯一的照明。\n\n向下看——深不见底。向上看——同样望不到头。你处于图书馆的腰部，上下都是无限。\n\n墙壁上每隔一段距离就有一个壁龛，里面放着落满灰尘的卷轴。有些卷轴被翻动过——你不是第一个来到这里的人。',
+  choices: [
+    {
+      label: '📜 检查壁龛中的卷轴',
+      hint: '知识+5，可能找到书签',
+      effects: () => {
+        modKnowledge(5);
+        if (!hasFlag('staircase_scroll') && Math.random() < 0.6) {
+          setFlag('staircase_scroll');
+          modBookmarks(1);
+          addLog('卷轴中夹着一枚丝带书签——前任探索者留下的。');
+        }
+      },
+      nextScene: 'spiral_staircase_mid'
+    },
+    {
+      label: '⬇️ 继续向下——前往深渊底层',
+      hint: '理智-15',
+      effects: () => { modSanity(-15); },
+      nextScene: 'abyssal_depths'
+    },
+    {
+      label: '⬆️ 向上攀登',
+      effects: () => {},
+      nextScene: 'silent_corridor'
+    }
+  ]
+};
+
+SCENES.spiral_staircase_mid = {
+  title: '🌀 螺旋楼梯·中途',
+  text: '在卷轴中，你发现了一段模糊的记录："...第7层，镜之厅的入口。不要相信镜子里的自己。它在说谎。"\n\n楼梯在这里分叉：一条继续向下，另一条通向一个挂着厚重天鹅绒帘幕的走廊。帘幕后隐约透出微光。',
+  choices: [
+    {
+      label: '🪞 掀开帘幕——进入镜之厅',
+      hint: '理智-10',
+      effects: () => { modSanity(-10); },
+      nextScene: 'mirror_hall'
+    },
+    {
+      label: '⬇️ 继续向下——深渊底层',
+      hint: '理智-10',
+      effects: () => { modSanity(-10); },
+      nextScene: 'abyssal_depths'
+    },
+    {
+      label: '⬆️ 返回入口大厅',
+      effects: () => {},
+      nextScene: 'entrance'
+    }
+  ]
+};
+
+SCENES.silent_corridor = {
+  title: '🔇 寂静回廊',
+  text: '寂静回廊名副其实——这里没有任何声音。你的脚步声、呼吸声、甚至心跳声都被某种力量吞噬了。墙壁上覆盖着深色的吸音绒毯，书架上的书都是关于沉默、冥想和梦境的著作。\n\n在走廊尽头，你看到了两个人影——但他们一动不动。走近才发现，那是两尊栩栩如生的蜡像，姿态定格在伸手取书的瞬间。\n\n一块铜牌上写着："他们读得太深，太久，太安静——最终成为了图书馆的一部分。"',
+  choices: [
+    {
+      label: '📕 从书架上取下一本《梦的解析》阅读',
+      hint: '知识+10，理智-5',
+      effects: () => { modKnowledge(10); modSanity(-5); },
+      nextScene: 'silent_corridor_read'
+    },
+    {
+      label: '🏃 快步穿过回廊——前往禁书区',
+      hint: '理智-5',
+      effects: () => { modSanity(-5); },
+      nextScene: 'forbidden_section'
+    },
+    {
+      label: '🔙 原路返回入口大厅',
+      effects: () => {},
+      nextScene: 'entrance'
+    }
+  ]
+};
+
+SCENES.silent_corridor_read = {
+  title: '🔇 寂静回廊·阅读后',
+  text: '你读完《梦的解析》的章节。书中描述了图书馆的一种现象：这里的时间是循环的，每一本书都在不断重写自己。此刻你手中的书页上，文字正在缓慢地流动、变化。\n\n你意识到，这座图书馆不是一座建筑，而是一个巨大的、自我书写的文本。所有人——包括你自己——都是其中的字符。\n\n一阵无声的微风拂过回廊。你知道必须继续前行。',
+  choices: [
+    {
+      label: '🚪 前往禁书区',
+      effects: () => { setFlag('understood_library_nature'); },
+      nextScene: 'forbidden_section'
+    },
+    {
+      label: '🏠 返回入口大厅（带着新的理解）',
+      effects: () => { setFlag('understood_library_nature'); },
+      nextScene: 'entrance'
+    }
+  ]
+};
+
+SCENES.forbidden_section = {
+  title: '🚫 禁书区',
+  text: '禁书区的入口是一道锈迹斑斑的铁栅栏，已经被撬开了一条缝——有人在你之前来过。内部的空气寒冷刺骨，书架上排列的不是书，而是一个个密封的铅盒。每个铅盒上贴着标签："不可名状之真理 #1"、"宇宙终结的三种方式"、"你不想知道的真相"...\n\n地面散落着一些烧焦的书页。显然，有人试图销毁这里的内容。\n\n在禁书区最深处，一扇厚重的铁门上写着："绝对禁忌——打开者永不得安宁。"',
+  choices: [
+    {
+      label: '📦 打开一个编号较小的铅盒——浅尝禁忌知识',
+      hint: '知识+20，理智-15',
+      requireMinSanity: 20,
+      effects: () => { modKnowledge(20); modSanity(-15); setFlag('tasted_forbidden'); },
+      nextScene: 'forbidden_after'
+    },
+    {
+      label: '🔓 推开那扇"绝对禁忌"的铁门',
+      hint: '知识+35，理智-35（需要理智≥50）',
+      requireMinSanity: 50,
+      effects: () => { modKnowledge(35); modSanity(-35); setFlag('opened_absolute_forbidden'); },
+      nextScene: 'abyssal_depths'
+    },
+    {
+      label: '🚶 谨慎地退出禁书区',
+      effects: () => {},
+      nextScene: 'entrance'
+    }
+  ]
+};
+
+SCENES.forbidden_after = {
+  title: '🚫 禁书区·阅读后',
+  text: '铅盒中的内容令人不安——那是关于图书馆起源的片段：它由一个古老的文明建造，目的是保存宇宙中所有可能的真理。但这个文明在建成图书馆后便消失了，因为"知道一切"本身就是一个悖论——如果你知道一切，你就必须知道自己为什么消失，而这知识本身就是你消失的原因。\n\n你的头开始疼痛。但你也获得了一些...有用的信息。',
+  choices: [
+    {
+      label: '🧠 消化知识，前往深渊底层',
+      effects: () => { modSanity(-5); },
+      nextScene: 'abyssal_depths'
+    },
+    {
+      label: '🏠 先回入口大厅冷静一下',
+      effects: () => { modSanity(5); },
+      nextScene: 'entrance'
+    }
+  ]
+};
+
+SCENES.index_hall = {
+  title: '📇 索引大厅',
+  text: '索引大厅是图书馆的心脏。这是一个六角形的房间——正如博尔赫斯所描述的——每一面墙都是一面镜子，映射出无限延伸的书架。中央是一张巨大的石桌，上面摊开着一本不断自动书写的索引目录。\n\n目录列出了图书馆中每一本书的位置、内容和读者人数。当你靠近时，书页自动翻到了你的名字——关于你的条目正在被实时书写。\n\n你读到："学者[你的名字]，入口时间：[当前时间]。当前状态：探索中。预计结局——"\n\n下面的文字模糊不清，似乎在不断变换。',
+  choices: [
+    {
+      label: '📖 阅读索引中关于"图书馆起源"的条目',
+      hint: '知识+20，理智-15',
+      effects: () => { modKnowledge(20); modSanity(-15); setFlag('know_origin'); },
+      nextScene: 'index_after'
+    },
+    {
+      label: '🔍 搜索关于"出口"的条目',
+      hint: '知识+10，可能找到关键线索',
+      effects: () => {
+        modKnowledge(10);
+        setFlag('found_exit_clue');
+      },
+      nextScene: 'index_after'
+    },
+    {
+      label: '🏠 退出索引大厅',
+      effects: () => {},
+      nextScene: 'entrance'
+    }
+  ]
+};
+
+SCENES.index_after = {
+  title: '📇 索引大厅·启示',
+  text: hasFlag('know_origin')
+    ? '你读到了起源：这座图书馆并非由人类建造。它是宇宙自我认知的副产品——当混沌中首次出现"意义"这个概念时，图书馆便诞生了。它存在于所有空间的背面，每一个有意识的生灵都在这里拥有一本书。而你，此刻正站在你自己的书页之上。'
+    : '关于出口的条目指向一个你尚未去过的地方——"镜之厅"。条目下方有一行手写的小字："不要相信镜中的自己。它比你更了解你。"',
+  choices: [
+    {
+      label: '🪞 前往镜之厅',
+      effects: () => {},
+      nextScene: 'mirror_hall'
+    },
+    {
+      label: '🌊 前往深渊底层',
+      hint: '理智-10',
+      effects: () => { modSanity(-10); },
+      nextScene: 'abyssal_depths'
+    },
+    {
+      label: '🏠 返回入口大厅',
+      effects: () => {},
+      nextScene: 'entrance'
+    }
+  ]
+};
+
+SCENES.mirror_hall = {
+  title: '🪞 镜之厅',
+  text: '镜之厅是一条狭长的走廊，两侧排列着落地镜。但与普通镜子不同，这些镜子映出的不是你的当前形象——\n\n第一面镜子：你看到自己年轻时的样子，满怀理想。\n第二面镜子：你看到自己老去，双眼空洞。\n第三面镜子：你看到自己根本没有倒影。\n第四面镜子：你看到自己正在看着你，嘴角挂着一丝诡异的微笑。\n\n走廊尽头是一面巨大的圆形镜子，金色的边框上刻着："只有认识自己的人，才能找到出口。"',
+  choices: [
+    {
+      label: '🪞 凝视圆形大镜，直面自我',
+      hint: '知识+15，理智-20（需要理智≥40）',
+      requireMinSanity: 40,
+      effects: () => { modKnowledge(15); modSanity(-20); setFlag('faced_mirror'); },
+      nextScene: 'mirror_revelation'
+    },
+    {
+      label: '👀 研究第四面镜子中的"另一个自己"',
+      hint: '知识+10，理智-15',
+      effects: () => { modKnowledge(10); modSanity(-15); setFlag('talked_to_mirror_self'); },
+      nextScene: 'mirror_double'
+    },
+    {
+      label: '🏃 逃离镜之厅',
+      effects: () => {},
+      nextScene: 'silent_corridor'
+    }
+  ]
+};
+
+SCENES.mirror_revelation = {
+  title: '🪞 镜之厅·启示',
+  text: '圆形大镜的表面泛起涟漪，你的倒影开始说话——用你自己的声音：\n\n"你不是在探索图书馆。你一直在探索自己。每一个书架都是你心智的映射，每一本书都是你未曾思考过的想法。图书馆没有出口，因为——"\n\n它停顿了一下，微笑。\n\n"——你就是图书馆。"\n\n镜面碎裂成千万片，每一片都映出你的不同面孔。在碎片背后，一条通道显现——通往最终的真相。',
+  choices: [
+    {
+      label: '🚶 走进通道——直面最终真相',
+      effects: () => { setFlag('ultimate_truth'); },
+      nextScene: 'abyssal_depths'
+    },
+    {
+      label: '🏠 先回入口大厅整理思绪',
+      effects: () => { modSanity(10); },
+      nextScene: 'entrance'
+    }
+  ]
+};
+
+SCENES.mirror_double = {
+  title: '🪞 镜之厅·另一个自己',
+  text: '你与第四面镜子中的自己对视。那个"你"先开口了：\n\n"嘿，别那么紧张。我比你更了解这座图书馆——毕竟我一直住在这里。你想找出口？我可以告诉你，但有一个条件。"\n\n它停顿了一下，笑得更加灿烂。\n\n"让我出去。你留下。"',
+  choices: [
+    {
+      label: '🤝 接受交易——让镜中自己替代你',
+      hint: '触发特殊结局',
+      effects: () => { setFlag('swapped_with_mirror'); },
+      nextScene: null,
+      ending: 'mirror_swap'
+    },
+    {
+      label: '❌ 拒绝——凭借自己的力量寻找出口',
+      hint: '知识+10，理智-5',
+      effects: () => { modKnowledge(10); modSanity(-5); setFlag('rejected_mirror'); },
+      nextScene: 'abyssal_depths'
+    },
+    {
+      label: '🏃 逃离镜之厅',
+      effects: () => {},
+      nextScene: 'silent_corridor'
+    }
+  ]
+};
+
+SCENES.abyssal_depths = {
+  title: '🕳️ 深渊底层',
+  text: '这里不再是图书馆——至少不是你认知中的图书馆。书架扭曲成不可能的角度，书本悬浮在空中缓缓翻页。地面不是固体，而是一种"凝固的黑暗"，每一步都激起涟漪。\n\n这里是图书馆的最深处，所有知识的汇聚点。在这里，思想本身可以实体化——你看到一团发光的雾在书架间游走，那是一位古代哲学家未完成的思考。\n\n正前方，虚空中悬浮着一本巨大的书——"总目录"。它是活的，封面上的眼睛正注视着你。\n\n一道深沉的声音在你脑海中回响：\n\n"你已经走了很远。现在，做出你的最终选择。"',
+  choices: [
+    {
+      label: '📖 阅读"总目录"——获取一切知识',
+      hint: '知识+50，理智-40（需要理智≥50）',
+      requireMinSanity: 50,
+      effects: () => { modKnowledge(50); modSanity(-40); setFlag('read_ultimate_book'); },
+      nextScene: null,
+      ending: 'enlightened'
+    },
+    {
+      label: '🔖 在总目录上留下你的书签——成为图书馆的一部分',
+      hint: '需要至少3个书签',
+      requireMinBookmarks: 3,
+      effects: () => { setFlag('became_librarian'); },
+      nextScene: null,
+      ending: 'librarian'
+    },
+    {
+      label: '🏃 寻找隐藏的出口——逃离图书馆',
+      hint: '需要知道图书馆本质',
+      requireFlag: 'understood_library_nature',
+      effects: () => {},
+      nextScene: null,
+      ending: 'escape'
+    },
+    {
+      label: '🔍 探寻图书馆的终极起源',
+      hint: '需要知道起源线索',
+      requireFlag: 'know_origin',
+      effects: () => {},
+      nextScene: null,
+      ending: 'truth_seeker'
+    },
+    {
+      label: '🧘 静坐冥想——接受图书馆的永恒',
+      hint: '需要理智≥30',
+      requireMinSanity: 30,
+      effects: () => {},
+      nextScene: null,
+      ending: 'eternal_reader'
+    }
+  ]
+};
+
+// ============================================================
+// 结局定义 (5+)
+// ============================================================
+
+ENDINGS.enlightened = {
+  title: '🌟 启蒙者',
+  type: '好结局',
+  text: '你翻开了"总目录"，浩瀚的知识如潮水般涌入你的意识。你看到了宇宙的诞生与终结，理解了所有哲学问题的答案，知晓了每一个曾经存在和将要存在的生命的名字。\n\n但知识本身是有代价的。当最后一页合上时，你发现自己已经不在图书馆中——你站在一座山巅，星空在头顶展开。图书馆完成了它的使命：它找到了一位能够承载终极知识的学者。\n\n你不再是追寻者，而是守护者。你将把知识带回人间——不是全部，而是足够引导文明走向下一个千年的部分。\n\n手中的书签化作了一颗种子。你将它埋入土壤，一棵新的知识之树开始生长。'
+};
+
+ENDINGS.mad_scholar = {
+  title: '🌀 疯学者',
+  type: '坏结局',
+  text: '你的理智被图书馆的无限性彻底压垮。书架在你眼中扭曲、旋转、崩塌。你听到了所有书同时被朗读的声音——每一种语言、每一个真理、每一个谎言——汇成一道无法承受的噪音。\n\n你倒在地上，蜷缩成婴儿的姿势。图书馆温柔地将你包裹，把你安置在一个舒适的小阅览室里。这里只有一本书，书页空白，你可以用余生去填充它。\n\n但你再也无法区分什么是书中的内容，什么是现实。你是读者，也是被读者。图书馆又多了一位永远的故事。'
+};
+
+ENDINGS.librarian = {
+  title: '📚 图书馆守护者',
+  type: '中立结局',
+  text: '你将书签插入总目录的某一页。书签发出柔和的铜色光芒，然后与书页融为一体。\n\n一瞬间，你理解了图书馆的所有规则。每一个书架的排列、每一本书的归属、每一个探索者的路径——都清晰地呈现在你心中。你成为了图书馆的管理员，它的守护者。\n\n从此，你漫步在无尽的书架之间，为迷失的探索者指点方向，为危险的书籍贴上警告标签，为空白的新书写下第一行字。你不再寻找出口，因为——你微笑了——这里已经是你的家。\n\n偶尔，你会在新来的探索者眼中看到自己当年的影子，然后默默递上一枚书签。'
+};
+
+ENDINGS.truth_seeker = {
+  title: '🔎 真相追寻者',
+  type: '隐藏结局',
+  text: '你整合了所有线索——哲学区的真理之书、索引大厅的起源记录、镜之厅的自我启示——一切指向同一个答案。\n\n这座图书馆不是由文明建造的，而是文明的摇篮。每一个智慧物种在进化到一定阶段时，都会在集体无意识中生成一座"图书馆"——一个储存所有可能知识的心灵空间。图书馆是思想本身的结构。\n\n你知道了真相，而真相给了你自由。你不是逃离了图书馆——你穿透了它的本质。当你再次睁开眼时，你回到了现实世界的研究室，手中握着一本薄薄的小册子，封面写着：《深渊图书馆：一位学者的探险记录》。这就是你带回来的全部——也是唯一需要带回来的东西。'
+};
+
+ENDINGS.escape = {
+  title: '🏃 深渊逃逸',
+  type: '好结局',
+  text: '凭借对图书馆本质的理解，你在深渊底层的虚空中看到了一道不起眼的门——它一直就在那里，只是之前你被知识的诱惑蒙蔽了双眼。\n\n你推开门，发现自己回到了图书馆的入口。身后的大门缓缓合拢，门上的铭文从"深渊图书馆"变成了"感谢你的访问"。\n\n你口袋里有几枚书签，脑海中有足够思考一生的知识。你回头看了一眼图书馆，第一次注意到大门上方的小字："随时欢迎回来——毕竟，你的一部分已经永远留在这里了。"\n\n你微笑着转身，走向黎明。'
+};
+
+ENDINGS.eternal_reader = {
+  title: '📖 永恒的读者',
+  type: '中立结局',
+  text: '你在深渊底层盘腿坐下，闭上眼睛。周围的喧嚣——书籍的翻页声、思想的低语、知识的洪流——逐渐远去。你进入了一种深度的冥想状态。\n\n在这份宁静中，你意识到：寻找出口本身就是一种执念。图书馆的存在不是为了囚禁，而是为了提供无限的选择。当你停止挣扎，开始真正地阅读——不带目的地阅读——你发现了一种前所未有的自由。\n\n你站起身来，走向最近的书架，随意取下一本书。书名是《永恒读者的午后》。你翻开第一页，发现书中的主角正在翻开一本书，书名是《永恒读者的午后》...\n\n你笑了。这是一个无限循环，而你现在是它的一部分——以最平静的方式。'
+};
+
+ENDINGS.mirror_swap = {
+  title: '🪞 镜像置换',
+  type: '隐藏结局',
+  text: '你握住了镜中自己的手。一阵冰冷的触感从指尖蔓延到全身，然后——你发现自己站在镜子里面，看着镜子外面的"你"整理了一下衣领，露出一个满意的微笑。\n\n"谢谢，"它说，"我在这里困了太久了。外面的世界——我已经不记得阳光的样子了。好好享受图书馆吧，它其实不坏。"\n\n它——或者说，现在是你曾经的倒影——转身走向出口，身影消失在光中。你独自留在镜之厅里，两侧的镜子不再映出你，而是映出图书馆的各个角落。\n\n一个新的身份在你心中浮现：你不再是学者，而是镜子里的存在。你可以通过每一面镜子观察图书馆的每个角落，帮助或迷惑后来的探索者。也许有一天，你也会遇到一个愿意与你交换的人。'
+};
+
+ENDINGS.lost = {
+  title: '🌑 迷失',
+  type: '坏结局',
+  text: '图书馆在你周围闭合。书架移动，通道消失，你在无尽的回廊中迷失了方向。这里的每一本书都是空白的——它们等待着被书写，等待着一个永远不会来的作者。\n\n你继续走着，一步又一步，直到时间本身失去了意义。偶尔你会看到其他迷失者的身影——他们匆匆穿过走廊，眼神空洞，已经忘记了来此的目的。\n\n你加入他们，成为图书馆又一位无名的漫游者。在总目录的某一页上，关于你的条目下只有一行字：\n\n"此处曾有一位学者。目的地：未知。状态：仍在寻找。"'
+};
+
+// ============================================================
+// 启动
+// ============================================================
+navigateTo('entrance');
+addLog('📚 你踏入了深渊图书馆...');
+</script>
+</body>
+</html>

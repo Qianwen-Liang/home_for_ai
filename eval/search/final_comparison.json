@@ -1,0 +1,92 @@
+{
+  "baseline": {
+    "queries": 28,
+    "P@k": 0.4071,
+    "Noise@k": 0.25,
+    "MRR": 0.4047,
+    "Hit@k": 0.4643,
+    "avg_ms": 159,
+    "errors": 0
+  },
+  "federated": {
+    "queries": 28,
+    "P@k": 0.8929,
+    "Noise@k": 0.0,
+    "MRR": 0.75,
+    "Hit@k": 0.75,
+    "avg_ms": 1699,
+    "errors": 0
+  },
+  "missed": [
+    {
+      "id": "T14",
+      "query": "大模型 上下文工程 注意力预算",
+      "p@k": 0.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 2329,
+      "err": "",
+      "n": 1
+    },
+    {
+      "id": "T16",
+      "query": "向量数据库 语义检索 重排序",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 2255,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T20",
+      "query": "hybrid search sparse dense combination",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 1661,
+      "err": "",
+      "n": 3
+    },
+    {
+      "id": "T23",
+      "query": "Anthropic contextual retrieval cookbook",
+      "p@k": 0.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 3275,
+      "err": "",
+      "n": 0
+    },
+    {
+      "id": "T24",
+      "query": "duckduckgo html endpoint scraping anomaly",
+      "p@k": 0.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 2276,
+      "err": "",
+      "n": 0
+    },
+    {
+      "id": "T25",
+      "query": "retrieval augmented generation failure rate",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 945,
+      "err": "",
+      "n": 3
+    },
+    {
+      "id": "T28",
+      "query": "搜索增强 查询改写 多路召回",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 2143,
+      "err": "",
+      "n": 3
+    }
+  ]
+}

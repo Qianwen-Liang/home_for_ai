@@ -1,0 +1,261 @@
+{
+  "timestamp": "2026-08-16 14:02:38",
+  "source": "QuixBugs (external public benchmark)",
+  "total_tasks": 31,
+  "passed_tasks": 31,
+  "task_pass_rate": 1.0,
+  "total_cases": 240,
+  "passed_cases": 240,
+  "case_pass_rate": 1.0,
+  "skipped_cases": 2,
+  "results": [
+    {
+      "task": "gcd",
+      "status": "PASS",
+      "passed": 6,
+      "total": 6,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "quicksort",
+      "status": "PASS",
+      "passed": 13,
+      "total": 13,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "flatten",
+      "status": "PASS",
+      "passed": 7,
+      "total": 7,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "powerset",
+      "status": "PASS",
+      "passed": 5,
+      "total": 5,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "lcs_length",
+      "status": "PASS",
+      "passed": 9,
+      "total": 9,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "find_first_in_sorted",
+      "status": "PASS",
+      "passed": 7,
+      "total": 7,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "next_palindrome",
+      "status": "PASS",
+      "passed": 5,
+      "total": 5,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "mergesort",
+      "status": "PASS",
+      "passed": 14,
+      "total": 14,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "bitcount",
+      "status": "PASS",
+      "passed": 9,
+      "total": 9,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "bucketsort",
+      "status": "PASS",
+      "passed": 7,
+      "total": 7,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "find_in_sorted",
+      "status": "PASS",
+      "passed": 7,
+      "total": 7,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "get_factors",
+      "status": "PASS",
+      "passed": 11,
+      "total": 11,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "hanoi",
+      "status": "PASS",
+      "passed": 8,
+      "total": 8,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "is_valid_parenthesization",
+      "status": "PASS",
+      "passed": 3,
+      "total": 3,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "kheapsort",
+      "status": "PASS",
+      "passed": 4,
+      "total": 4,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "knapsack",
+      "status": "PASS",
+      "passed": 9,
+      "total": 9,
+      "skipped": 1,
+      "detail": "跳过 1 个官方慢用例"
+    },
+    {
+      "task": "kth",
+      "status": "PASS",
+      "passed": 7,
+      "total": 7,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "levenshtein",
+      "status": "PASS",
+      "passed": 6,
+      "total": 6,
+      "skipped": 1,
+      "detail": "跳过 1 个官方慢用例"
+    },
+    {
+      "task": "lis",
+      "status": "PASS",
+      "passed": 12,
+      "total": 12,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "longest_common_subsequence",
+      "status": "PASS",
+      "passed": 10,
+      "total": 10,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "max_sublist_sum",
+      "status": "PASS",
+      "passed": 6,
+      "total": 6,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "next_permutation",
+      "status": "PASS",
+      "passed": 8,
+      "total": 8,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "pascal",
+      "status": "PASS",
+      "passed": 5,
+      "total": 5,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "possible_change",
+      "status": "PASS",
+      "passed": 10,
+      "total": 10,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "rpn_eval",
+      "status": "PASS",
+      "passed": 6,
+      "total": 6,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "shunting_yard",
+      "status": "PASS",
+      "passed": 6,
+      "total": 6,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "sieve",
+      "status": "PASS",
+      "passed": 6,
+      "total": 6,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "sqrt",
+      "status": "PASS",
+      "passed": 7,
+      "total": 7,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "subsequences",
+      "status": "PASS",
+      "passed": 12,
+      "total": 12,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "to_base",
+      "status": "PASS",
+      "passed": 10,
+      "total": 10,
+      "skipped": 0,
+      "detail": ""
+    },
+    {
+      "task": "wrap",
+      "status": "PASS",
+      "passed": 5,
+      "total": 5,
+      "skipped": 0,
+      "detail": ""
+    }
+  ]
+}

@@ -1,0 +1,112 @@
+[
+  {
+    "id": "EXP-1793369627",
+    "type": "success",
+    "tool": "persist_tool_0",
+    "task": "",
+    "result": "",
+    "lesson": "持久化测试经验0 - 足够长的文字来通过长度检查",
+    "keywords": [
+      "persist",
+      "tool",
+      "持久",
+      "测试",
+      "经验",
+      "足够",
+      "文字",
+      "通过",
+      "长度",
+      "检查"
+    ],
+    "timestamp": "2026-10-30 22:13:47",
+    "stored_to_knowledge": true
+  },
+  {
+    "id": "EXP-1793369627",
+    "type": "success",
+    "tool": "persist_tool_1",
+    "task": "",
+    "result": "",
+    "lesson": "持久化测试经验1 - 足够长的文字来通过长度检查",
+    "keywords": [
+      "persist",
+      "tool",
+      "持久",
+      "测试",
+      "经验",
+      "足够",
+      "文字",
+      "通过",
+      "长度",
+      "检查"
+    ],
+    "timestamp": "2026-10-30 22:13:47",
+    "stored_to_knowledge": true
+  },
+  {
+    "id": "EXP-1793369627",
+    "type": "success",
+    "tool": "persist_tool_2",
+    "task": "",
+    "result": "",
+    "lesson": "持久化测试经验2 - 足够长的文字来通过长度检查",
+    "keywords": [
+      "persist",
+      "tool",
+      "持久",
+      "测试",
+      "经验",
+      "足够",
+      "文字",
+      "通过",
+      "长度",
+      "检查"
+    ],
+    "timestamp": "2026-10-30 22:13:47",
+    "stored_to_knowledge": true
+  },
+  {
+    "id": "EXP-1793369627",
+    "type": "success",
+    "tool": "persist_tool_3",
+    "task": "",
+    "result": "",
+    "lesson": "持久化测试经验3 - 足够长的文字来通过长度检查",
+    "keywords": [
+      "persist",
+      "tool",
+      "持久",
+      "测试",
+      "经验",
+      "足够",
+      "文字",
+      "通过",
+      "长度",
+      "检查"
+    ],
+    "timestamp": "2026-10-30 22:13:47",
+    "stored_to_knowledge": true
+  },
+  {
+    "id": "EXP-1793369627",
+    "type": "success",
+    "tool": "persist_tool_4",
+    "task": "",
+    "result": "",
+    "lesson": "持久化测试经验4 - 足够长的文字来通过长度检查",
+    "keywords": [
+      "persist",
+      "tool",
+      "持久",
+      "测试",
+      "经验",
+      "足够",
+      "文字",
+      "通过",
+      "长度",
+      "检查"
+    ],
+    "timestamp": "2026-10-30 22:13:47",
+    "stored_to_knowledge": true
+  }
+]

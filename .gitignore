@@ -1,0 +1,61 @@
+# ── 敏感 / 本地状态 ──────────────────────────────────────
+.env
+conversation-history.json
+
+# ── Python ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.class
+.pytest_cache/
+.hypothesis/
+*.egg-info/
+build/
+dist/
+
+# ── 巨型研究资产（约 6GB：第三方库源码、SAT/MIP 实例、编译产物）──
+# 这些是研究过程产物，不属于智能体本体代码，且体量超出仓库合理范围。
+projects/
+
+# ── 部署备份 ─────────────────────────────────────────────
+.backups/
+.deploy_backups/
+**/deploy_backups/
+**/.deploy_backups/
+
+# ── 运行时状态（会随每次运行变化，不进版本库）────────────
+memory/cmd_output/
+memory/snapshots/
+memory/checkpoints/
+memory/offline/
+memory/healing_sessions/
+memory/audit/
+memory/repair_history.json
+memory/monitor_data.json
+memory/tasks.json
+memory/agents.json
+memory/messages.json
+memory/dispatch.json
+memory/workflows.json
+memory/blackboard/
+memory/capsule/
+memory/improvement_*/
+memory/paper_collab_*/
+memory/tech_radar/
+memory/evaluations/
+memory/role_states.json
+memory/decisions.json
+memory/escalations.json
+memory/cycle_tracker/
+memory/search_cache.json
+memory/safety_data.json
+memory/test_results.json
+
+# ── 日志 ─────────────────────────────────────────────────
+logs/*.log
+
+# ── 可重建缓存 ───────────────────────────────────────────
+knowledge/vector_cache.json
+
+# ── 测试临时产物 ─────────────────────────────────────────
+_contract_tmp.txt
+_contract_tmp_dir/

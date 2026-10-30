@@ -1,0 +1,114 @@
+{
+  "mode": "full",
+  "agg": {
+    "queries": 10,
+    "P@k": 1.0,
+    "Noise@k": 0.0,
+    "MRR": 0.8,
+    "Hit@k": 0.8,
+    "avg_ms": 4148,
+    "errors": 0
+  },
+  "per_query": [
+    {
+      "id": "T11",
+      "query": "Anthropic Claude Code best practices",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 2946,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T12",
+      "query": "LangChain retrieval agent",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 4234,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T13",
+      "query": "检索增强生成 混合检索 BM25",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 2154,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T14",
+      "query": "大模型 上下文工程 注意力预算",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 6846,
+      "err": "",
+      "n": 4
+    },
+    {
+      "id": "T15",
+      "query": "智能体 工具调用 架构设计",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1874,
+      "err": "",
+      "n": 3
+    },
+    {
+      "id": "T16",
+      "query": "向量数据库 语义检索 重排序",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 7558,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T17",
+      "query": "BM25 vs dense retrieval comparison",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 5417,
+      "err": "",
+      "n": 4
+    },
+    {
+      "id": "T18",
+      "query": "reciprocal rank fusion RRF",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 3724,
+      "err": "",
+      "n": 4
+    },
+    {
+      "id": "T19",
+      "query": "workflow vs agent orchestration",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 3463,
+      "err": "",
+      "n": 4
+    },
+    {
+      "id": "T20",
+      "query": "hybrid search sparse dense combination",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 3262,
+      "err": "",
+      "n": 4
+    }
+  ]
+}

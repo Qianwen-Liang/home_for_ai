@@ -1,0 +1,103 @@
+{
+  "_doc": "契约测试基线（步骤1.3产出）。known_issues 为契约测试暴露的真实缺口，供步骤5修复。",
+  "generated": "2026-10-30",
+  "spec": "tests/contract/SPEC.md",
+  "tool_count": 16,
+  "tools": [
+    "read_file",
+    "list_directory",
+    "write_file",
+    "replace_text",
+    "make_directory",
+    "run_command",
+    "web_search",
+    "task_tracker",
+    "knowledge",
+    "calculate",
+    "self_check",
+    "test_runner",
+    "safe_deploy",
+    "artifact_validator",
+    "evidence_verifier",
+    "multi_reviewer"
+  ],
+  "assertions": {
+    "C1_schema_compliance": "工具定义符合MCP必填字段与命名规则",
+    "C2_param_validation": "6类边界输入满足P1/P2/P3",
+    "C3_error_contract": "错误必为已知类型或可识别错误串",
+    "C4_no_exception_leak": "任意输入绝不泄漏未包装异常",
+    "C5_result_type": "返回值必为 str",
+    "C6_large_result": "超阈值必须走摘要路径"
+  },
+  "latest_run": {
+    "passed": 64,
+    "failed": 0,
+    "skipped": 2,
+    "summary": "64 passed, 2 skipped in 16.46s"
+  },
+  "known_issues": [
+    {
+      "id": "K1",
+      "assertion": "C3",
+      "severity": "中",
+      "issue": "7个工具的错误消息前缀不统一（返回'未知操作:/不可用:'而非 ❌ 前缀）",
+      "tools": [
+        "run_command",
+        "web_search",
+        "task_tracker",
+        "knowledge",
+        "calculate",
+        "test_runner",
+        "safe_deploy"
+      ],
+      "fix_in": "步骤5.2",
+      "status": "closed",
+      "closed_at": "2026-10-30",
+      "evidence": "scripts/fix_error_prefix.py 统一 16 处错误前缀为 ❌；gate.py G3 探测通过"
+    },
+    {
+      "id": "K2",
+      "assertion": "C3",
+      "severity": "中",
+      "issue": "run_command 失败时返回中性串 '返回码: N'，缺少明确失败标记，模型可能误判为成功",
+      "tools": [
+        "run_command"
+      ],
+      "fix_in": "步骤5.2",
+      "status": "closed",
+      "closed_at": "2026-10-30",
+      "evidence": "tools/runner.py 失败返回增加 ❌ 标记（静默失败修复）；同时修复 Windows STDERR 乱码"
+    },
+    {
+      "id": "K3",
+      "assertion": "C1",
+      "severity": "低",
+      "issue": "0/16 工具提供 outputSchema（MCP 规范推荐，提供则结果必须符合）",
+      "tools": "all",
+      "fix_in": "步骤2（注册表承载）",
+      "status": "accepted",
+      "closed_at": "",
+      "evidence": "MCP 推荐项非必填；当前无并行执行/自动信任 outputSchema 的场景，收益不足"
+    },
+    {
+      "id": "K4",
+      "assertion": "C1",
+      "severity": "低",
+      "issue": "0/16 工具提供 annotations（idempotent/readOnly/destructive 等行为声明）",
+      "tools": "all",
+      "fix_in": "步骤2（注册表承载）",
+      "status": "accepted",
+      "closed_at": "",
+      "evidence": "annotations 承载 readOnly/idempotent 语义，是未来工具并行化的前置条件；当前未并行化，暂接受"
+    }
+  ],
+  "exemptions": [
+    {
+      "tool": "evidence_verifier",
+      "assertion": "C3",
+      "reason": "仅接受 report 参数，空串会走正常校验路径而非错误路径"
+    }
+  ],
+  "next_step": "进入步骤 2（声明式工具注册表），本基线作为改造后的回归对照",
+  "status_updated": "2026-10-30"
+}

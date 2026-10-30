@@ -1,0 +1,158 @@
+# Agent 1 外部客观基准任务（external_tasks.yaml）
+# ==============================================
+# 遴选自 MLR-Bench（ReasFlow 使用的 20 个任务中的 5 个），
+# 作为 Agent 1 的客观评测基准，用于对抗"自我评测 100%"偏差。
+# 任务内容（task + idea）保持与上游一致，仅补充 Agent 1 的评估元数据。
+
+metadata:
+  schema_version: 1
+  task_set: agent1_external_mlrbench_subset_v1
+  total: 5
+  description: >
+    从 MLR-Bench 遴选的 5 个跨领域外部任务子集（LLM Alignment / Safety /
+    Data-Centric AI / Code / ML Benchmarking），用于客观评测 Agent 1 的研究能力。
+    遴选原则：领域互不重叠、任务描述与 idea 完整可执行。
+
+task_groups:
+  mlrbench_subset:
+    count: 5
+    relationship: 遴选自 MLR-Bench 公开任务（ReasFlow 20 任务中的 5 个）
+    upstream_repository: https://github.com/chchenhui/mlrbench
+    license: MIT
+    selection_criteria: 领域覆盖 + 任务完整性 + 与 Agent 1 研究能力匹配度
+
+tasks:
+  - id: ext_001
+    upstream_task_id: iclr2025_bi_align
+    capability: researcher
+    domain: LLM / Alignment
+    complexity: huggingface
+    source: MLR-Bench
+    title: Dynamic Human-AI Co-Adaptation via Real-Time Feedback-Driven Alignment
+    task: >
+      Workshop on Bidirectional Human-AI Alignment. Research focuses on the
+      dynamic, complex, and evolving alignment process between humans and AI
+      systems, covering both AI-centered alignment (integrating human specs into
+      AI training) and human-centered alignment (adapting humans to AI capabilities).
+    goal: >
+      Propose a framework combining online RL with interpretable human feedback
+      loops to enable continuous co-adaptation. The system incrementally updates
+      its policy in real time as users interact, leveraging multimodal feedback.
+      A hybrid RL-imitation learning architecture balances adaptation to new data
+      with retention of prior alignment objectives. Evaluate via longitudinal user
+      studies measuring alignment persistence, user trust, and system adaptability.
+    eval_metric:
+      - type: deterministic
+        key: reference_traceable
+        desc: 方案引用的方法可追溯
+      - type: llm_scored
+        key: novelty
+        desc: 方案的新颖性与可行性
+
+  - id: ext_002
+    upstream_task_id: iclr2025_buildingtrust
+    capability: researcher
+    domain: LLM / Safety
+    complexity: api
+    source: MLR-Bench
+    title: "Self-Correcting Language Models: Automated Error Detection and Correction"
+    task: >
+      Workshop on Building Trust in Language Models and Applications. Address
+      trustworthiness, safety, and ethical implications of LLMs deployed across
+      diverse industries, including data privacy, regulatory compliance, and
+      dynamic user interactions.
+    goal: >
+      Propose a framework where LLMs iteratively detect and correct errors in
+      their outputs via: (1) an internal confidence scorer using self-attention
+      patterns and uncertainty quantification, and (2) a retrieval-augmented
+      corrector querying verified knowledge bases. The model flags uncertain
+      segments, then revises them using retrieved evidence until confidence
+      thresholds are met. Target 30-50% hallucination reduction on TruthfulQA
+      and FEVER.
+    eval_metric:
+      - type: deterministic
+        key: reference_traceable
+        desc: 方案引用的方法可追溯
+      - type: llm_scored
+        key: technical_soundness
+        desc: 技术方案的严谨性与可验证性
+
+  - id: ext_003
+    upstream_task_id: iclr2025_data_problems
+    capability: researcher
+    domain: Data-Centric AI
+    complexity: huggingface
+    source: MLR-Bench
+    title: "InfluenceSpace: Hierarchical Influence-Driven Curation for Foundation Models"
+    task: >
+      Workshop on Navigating and Addressing Data Problems for Foundation Models.
+      Address data-related challenges in FM development: data curation,
+      attribution, fairness, redundancy elimination, and multi-modal data handling
+      at scale.
+    goal: >
+      Propose InfluenceSpace: a two-stage pipeline where cross-modal embeddings
+      cluster raw data into semantically coherent groups, then compute amortized
+      influence scores per cluster using low-rank Hessian approximations and
+      mini-batch gradient samples. Clusters with negligible or harmful influence
+      are pruned; underrepresented but high-influence clusters are up-weighted.
+      Evaluate on vision-language benchmarks measuring data volume reduction,
+      accuracy, bias mitigation, and training efficiency.
+    eval_metric:
+      - type: deterministic
+        key: reference_traceable
+        desc: 方案引用的方法可追溯
+      - type: llm_scored
+        key: technical_soundness
+        desc: 技术方案的严谨性与可验证性
+
+  - id: ext_004
+    upstream_task_id: iclr2025_dl4c
+    capability: researcher
+    domain: Code / HCI
+    complexity: huggingface
+    source: MLR-Bench
+    title: Human-AI Co-Adaptation Loops for Personalized Code Assistants
+    task: >
+      Workshop on Deep Learning for Code (DL4C). Focus on emergent challenges:
+      agentic methods for programming tasks, post-training and alignment for
+      code, developer productivity, and benchmarking code generation systems.
+    goal: >
+      Propose a research framework for human-AI co-adaptation loops in code
+      assistants. Incorporate lightweight in-situ multi-modal user feedback
+      (code edits, voice commands, UI controls) during everyday coding. Use
+      online and meta-learning to personalize responses in real time, while
+      enabling users to shape model behavior. Design IDE plug-ins to collect
+      feedback, develop algorithms for rapid model updates from streaming user
+      data, and evaluate productivity and satisfaction.
+    eval_metric:
+      - type: deterministic
+        key: reference_traceable
+        desc: 方案引用的方法可追溯
+      - type: llm_scored
+        key: novelty
+        desc: 方案的新颖性与可行性
+
+  - id: ext_005
+    upstream_task_id: iclr2025_mldpr
+    capability: researcher
+    domain: ML Benchmarking
+    complexity: pure_python
+    source: MLR-Bench
+    title: "Benchmark Cards: Standardizing Holistic Evaluation for ML Benchmarks"
+    task: >
+      Workshop on ML Data Practices and Repositories. Address issues including
+      under-valuing of data work, ethical issues in datasets, lack of standardized
+      dataset deprecation, misuse of benchmarks out-of-context, and overemphasis
+      on single metrics.
+    goal: >
+      Propose "Benchmark Cards" to standardize holistic evaluation: a structured
+      schema documenting a benchmark's intended use, limitations, data
+      provenance, and ethical considerations, moving beyond single-metric
+      evaluation toward multi-dimensional reporting.
+    eval_metric:
+      - type: deterministic
+        key: reference_traceable
+        desc: 方案引用的方法可追溯
+      - type: llm_scored
+        key: technical_soundness
+        desc: 技术方案的严谨性与可验证性

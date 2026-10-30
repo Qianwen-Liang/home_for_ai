@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深渊地牢 — Abyssal Dungeon</title>
+<style>
+:root { --bg:#0a0a14; --panel:#12122a; --gold:#c9a96e; --red:#c0392b; --green:#27ae60; --blue:#2980b9; --text:#c8c8d4; --dim:#5a5a7a; }
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;display:flex;justify-content:center;align-items:center;min-height:100vh;overflow:hidden}
+#container{display:flex;gap:12px;padding:15px;max-width:1100px;width:100%;height:100vh;max-height:750px}
+#game-area{flex:1;display:flex;flex-direction:column;min-width:0}
+#map-canvas{border:2px solid #2a2a4a;border-radius:4px;image-rendering:pixelated;width:100%;flex:1;display:block}
+#status-bar{display:flex;gap:15px;padding:8px 12px;background:var(--panel);border-radius:4px;margin-top:8px;font-size:0.85em;flex-wrap:wrap}
+#status-bar span{white-space:nowrap}
+#side-panel{width:260px;display:flex;flex-direction:column;gap:10px;font-size:0.8em}
+.panel-box{background:var(--panel);border:1px solid #2a2a4a;border-radius:4px;padding:12px;overflow-y:auto}
+.panel-box h3{color:var(--gold);font-size:0.9em;margin-bottom:8px;border-bottom:1px solid #2a2a4a;padding-bottom:5px}
+#log-box{flex:1;max-height:200px}
+#log-box .log{color:var(--dim);padding:2px 0;border-bottom:1px solid #1a1a2a}
+#log-box .log:last-child{border:none}
+#log-box .log.danger{color:var(--red)}
+#log-box .log.heal{color:var(--green)}
+#log-box .log.loot{color:var(--gold)}
+#inv-list{list-style:none}
+#inv-list li{padding:3px 0;border-bottom:1px solid #1a1a2a;cursor:pointer}
+#inv-list li:hover{color:var(--gold)}
+#enemy-info{color:var(--dim);font-style:italic;min-height:20px}
+.stat-row{display:flex;justify-content:space-between;padding:2px 0}
+.stat-row .val{color:var(--gold)}
+.hp-bar-outer{height:6px;background:#1a1a2a;border-radius:3px;margin-top:2px}
+.hp-bar-inner{height:100%;border-radius:3px;transition:width 0.3s}
+#mobile-controls{display:none;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:8px}
+#mobile-controls button{background:var(--panel);border:1px solid #3a3a5a;color:var(--text);padding:10px;border-radius:4px;font-size:1.2em;cursor:pointer}
+#mobile-controls button:active{background:#2a2a4a}
+.overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:100;justify-content:center;align-items:center}
+.overlay.active{display:flex}
+.overlay-card{background:var(--panel);border:2px solid var(--gold);border-radius:12px;padding:35px;max-width:480px;text-align:center}
+.overlay-card h2{color:var(--gold);font-size:1.6em;margin-bottom:12px}
+.overlay-card p{line-height:1.7;margin-bottom:15px}
+.overlay-card button{background:var(--gold);color:var(--bg);border:none;padding:10px 25px;border-radius:6px;font-family:inherit;font-size:1em;cursor:pointer;font-weight:bold;margin:5px}
+.overlay-card button:hover{opacity:0.9}
+@media(max-width:750px){#container{flex-direction:column;height:auto;max-height:none}#side-panel{width:100%;flex-direction:row;flex-wrap:wrap}#side-panel>*{flex:1;min-width:120px}#mobile-controls{display:grid}}
+</style>
+</head>
+<body>
+
+<div id="container">
+  <div id="game-area">
+    <canvas id="map-canvas"></canvas>
+    <div id="status-bar">
+      <span>🏰 层: <b id="floor-num">1</b>/5</span>
+      <span>❤️ <span id="hp-val">30</span>/<span id="hp-max">30</span></span>
+      <span>⚔️ 攻:<span id="atk-val">5</span></span>
+      <span>🛡️ 防:<span id="def-val">2</span></span>
+      <span>👁️ 视野:<span id="fov-val">7</span></span>
+      <span>👣 步数:<span id="steps-val">0</span></span>
+    </div>
+    <div id="mobile-controls">
+      <button onclick="handleKey('ArrowUp')">⬆️</button>
+      <button onclick="handleKey('ArrowLeft')">⬅️</button>
+      <button onclick="handleKey('ArrowDown')">⬇️</button>
+      <button onclick="handleKey('ArrowRight')">➡️</button>
+      <button onclick="waitTurn()">⏸️</button>
+      <button onclick="handleKey('i')">🎒</button>
+    </div>
+  </div>
+  <div id="side-panel">
+    <div class="panel-box">
+      <h3>📋 日志</h3>
+      <div id="log-box"></div>
+    </div>
+    <div class="panel-box">
+      <h3>🎒 物品 (I键)</h3>
+      <ul id="inv-list"><li style="color:var(--dim)">空空如也</li></ul>
+    </div>
+    <div class="panel-box">
+      <h3>👁️ 目标</h3>
+      <div id="enemy-info">前方安全</div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="overlay-card" id="overlay-card"></div>
+</div>
+
+<script>
+// ============================================================
+// 深渊地牢 — Roguelike 引擎
+// ============================================================
+
+// ── 常量 ──
+const MAP_W = 48, MAP_H = 32;
+const TILE = { WALL:0, FLOOR:1, STAIRS:2 };
+const canvas = document.getElementById('map-canvas');
+const ctx = canvas.getContext('2d');
+let CELL = 16;
+
+// ── 游戏状态 ──
+const G = {
+  map: [], visible: [], explored: [],
+  player: { x:0, y:0, hp:30, maxHp:30, atk:5, def:2, lvl:1, xp:0, fovRange:7 },
+  enemies: [],
+  items: [],     // ground items
+  inventory: [], // player inventory
+  floor: 1,
+  steps: 0,
+  gameOver: false,
+  logs: [],
+  itemIdCounter: 0
+};
+
+// ── 物品定义 ──
+const ITEM_DB = {
+  hp_potion:  { name:'生命药水', glyph:'🧪', color:'#e74c3c', desc:'恢复15点生命', use(g) { heal(15); }},
+  big_potion: { name:'大生命药水', glyph:'🧪', color:'#c0392b', desc:'恢复30点生命', use(g) { heal(30); }},
+  iron_sword:{ name:'铁剑', glyph:'🗡️', color:'#bdc3c7', desc:'攻击+4', use(g) { G.player.atk += 4; log('装备了铁剑！攻击力+4','loot'); }},
+  leather_armor:{ name:'皮甲', glyph:'🛡️', color:'#8b4513', desc:'防御+3', use(g) { G.player.def += 3; log('穿上了皮甲！防御+3','loot'); }},
+  fov_scroll:{ name:'洞察卷轴', glyph:'📜', color:'#f39c12', desc:'视野+2', use(g) { G.player.fovRange = Math.min(12, G.player.fovRange+2); log('视野范围扩大了！','loot'); }},
+  xp_scroll: { name:'智慧卷轴', glyph:'📜', color:'#9b59b6', desc:'获得经验值', use(g) { gainXP(15); }},
+};
+
+// ── 敌人定义 ──
+const ENEMY_DB = {
+  rat:    { name:'巨鼠', glyph:'🐀', color:'#95a5a6', hp:8,  atk:3, def:0, xp:5,  fov:4 },
+  bat:    { name:'暗影蝠', glyph:'🦇', color:'#7f8c8d', hp:5,  atk:4, def:0, xp:4,  fov:5 },
+  skeleton:{ name:'骷髅兵', glyph:'💀', color:'#ecf0f1', hp:15, atk:5, def:2, xp:12, fov:5 },
+  slime:  { name:'酸液怪', glyph:'🟢', color:'#27ae60', hp:10, atk:4, def:1, xp:8,  fov:3 },
+  demon:  { name:'深渊魔', glyph:'👹', color:'#e74c3c', hp:25, atk:8, def:4, xp:25, fov:7 },
+  boss:   { name:'图书馆守护者', glyph:'👾', color:'#8e44ad', hp:50, atk:12, def:6, xp:50, fov:8 },
+};
+
+// ── 日志 ──
+function log(msg, cls='') {
+  G.logs.unshift({msg,cls});
+  if (G.logs.length > 50) G.logs.pop();
+  renderLog();
+}
+function renderLog() {
+  const el = document.getElementById('log-box');
+  el.innerHTML = G.logs.slice(0,15).map(l => `<div class="log ${l.cls}">${l.msg}</div>`).join('');
+}
+
+// ── 生命值 ──
+function heal(amt) {
+  G.player.hp = Math.min(G.player.maxHp, G.player.hp + amt);
+  log(`恢复了 ${amt} 点生命！`,'heal');
+}
+function damagePlayer(amt) {
+  G.player.hp -= amt;
+  log(`受到 ${amt} 点伤害！`,'danger');
+  if (G.player.hp <= 0) gameOver('defeat');
+}
+function gainXP(amt) {
+  G.player.xp += amt;
+  log(`获得 ${amt} 经验值`,'loot');
+  const needed = G.player.lvl * 10 + 10;
+  if (G.player.xp >= needed) {
+    G.player.xp -= needed;
+    G.player.lvl++;
+    G.player.maxHp += 8;
+    G.player.hp = G.player.maxHp;
+    G.player.atk += 2;
+    G.player.def += 1;
+    log(`🎉 升级！等级 ${G.player.lvl} 生命+8 攻击+2 防御+1`,'loot');
+  }
+}
+
+// ── BSP 地牢生成 ──
+function generateDungeon() {
+  // 初始化全墙
+  G.map = Array.from({length:MAP_H}, ()=>Array(MAP_W).fill(TILE.WALL));
+  G.visible = Array.from({length:MAP_H}, ()=>Array(MAP_W).fill(false));
+  G.explored = Array.from({length:MAP_H}, ()=>Array(MAP_W).fill(false));
+
+  const rooms = [];
+  const MIN_SIZE = 4;
+
+  function split(x, y, w, h, depth) {
+    if (depth > 5 || w < MIN_SIZE*2+2 || h < MIN_SIZE*2+2) {
+      // 创建房间
+      const rw = r(MIN_SIZE, Math.max(MIN_SIZE+1, w-2));
+      const rh = r(MIN_SIZE, Math.max(MIN_SIZE+1, h-2));
+      const rx = x + r(1, w - rw - 1);
+      const ry = y + r(1, h - rh - 1);
+      rooms.push({x:rx, y:ry, w:rw, h:rh, cx:Math.floor(rx+rw/2), cy:Math.floor(ry+rh/2)});
+      return;
+    }
+    const horizontal = (w < h) ? true : (h < w) ? false : (Math.random() < 0.5);
+    if (horizontal) {
+      const splitY = y + r(MIN_SIZE+1, h-MIN_SIZE-1);
+      split(x, y, w, splitY-y, depth+1);
+      split(x, splitY, w, y+h-splitY, depth+1);
+    } else {
+      const splitX = x + r(MIN_SIZE+1, w-MIN_SIZE-1);
+      split(x, y, splitX-x, h, depth+1);
+      split(splitX, y, x+w-splitX, h, depth+1);
+    }
+  }
+
+  split(0, 0, MAP_W, MAP_H, 0);
+
+  // 绘制房间
+  for (const room of rooms) {
+    for (let ry = room.y; ry < room.y + room.h; ry++)
+      for (let rx = room.x; rx < room.x + room.w; rx++)
+        G.map[ry][rx] = TILE.FLOOR;
+  }
+
+  // 连接房间（最近邻走廊）
+  for (let i = 1; i < rooms.length; i++) {
+    const a = rooms[i-1], b = rooms[i];
+    let cx = a.cx, cy = a.cy;
+    // L形走廊
+    while (cx !== b.cx) { G.map[cy][cx] = TILE.FLOOR; cx += cx < b.cx ? 1 : -1; }
+    while (cy !== b.cy) { G.map[cy][cx] = TILE.FLOOR; cy += cy < b.cy ? 1 : -1; }
+  }
+
+  // 放置玩家在第一个房间
+  const startRoom = rooms[0];
+  G.player.x = startRoom.cx;
+  G.player.y = startRoom.cy;
+
+  // 放置楼梯在最后一个房间
+  const endRoom = rooms[rooms.length-1];
+  G.map[endRoom.cy][endRoom.cx] = TILE.STAIRS;
+
+  // 放置敌人
+  G.enemies = [];
+  const enemyTypes = G.floor >= 5 ? ['demon','demon','boss'] :
+                     G.floor >= 3 ? ['skeleton','skeleton','slime','bat','demon'] :
+                     ['rat','rat','bat','slime','skeleton'];
+  const numEnemies = 5 + G.floor * 2;
+  for (let i = 0; i < numEnemies; i++) {
+    const room = rooms[r(1, rooms.length-1)]; // 不在起始房间
+    const ex = room.x + r(0, room.w-1);
+    const ey = room.y + r(0, room.h-1);
+    if (G.map[ey][ex] === TILE.FLOOR && (ex !== G.player.x || ey !== G.player.y)) {
+      const type = enemyTypes[r(0, enemyTypes.length-1)];
+      const ed = ENEMY_DB[type];
+      G.enemies.push({
+        x:ex, y:ey, type, name:ed.name, glyph:ed.glyph, color:ed.color,
+        hp:ed.hp, maxHp:ed.hp, atk:ed.atk, def:ed.def, xp:ed.xp, fov:ed.fov,
+        alive:true
+      });
+    }
+  }
+
+  // 放置物品
+  G.items = [];
+  const possibleItems = ['hp_potion','hp_potion','hp_potion','big_potion','iron_sword','leather_armor','fov_scroll','xp_scroll'];
+  for (let i = 0; i < 4 + G.floor; i++) {
+    const room = rooms[r(0, rooms.length-1)];
+    const ix = room.x + r(0, room.w-1);
+    const iy = room.y + r(0, room.h-1);
+    if (G.map[iy][ix] === TILE.FLOOR && (ix !== G.player.x || iy !== G.player.y) && (ix !== endRoom.cx || iy !== endRoom.cy)) {
+      const itype = possibleItems[r(0, possibleItems.length-1)];
+      G.items.push({x:ix, y:iy, type:itype, id: G.itemIdCounter++});
+    }
+  }
+
+  updateFOV();
+}
+
+// ── FOV (Bresenham视线检测 + 距离) ──
+function isVisible(x1, y1, x2, y2) {
+  // Bresenham line check
+  let dx = Math.abs(x2 - x1), dy = Math.abs(y2 - y1);
+  let sx = x1 < x2 ? 1 : -1, sy = y1 < y2 ? 1 : -1;
+  let err = dx - dy;
+  let cx = x1, cy = y1;
+  while (true) {
+    if (cx === x2 && cy === y2) return true;
+    if (G.map[cy] && G.map[cy][cx] === TILE.WALL) return false;
+    if (cx === x2 && cy === y2) break;
+    const e2 = 2 * err;
+    if (e2 > -dy) { err -= dy; cx += sx; }
+    if (e2 < dx) { err += dx; cy += sy; }
+    if (cx === x2 && cy === y2) return true;
+  }
+  return true;
+}
+
+function updateFOV() {
+  const px = G.player.x, py = G.player.y, rng = G.player.fovRange;
+  for (let y = 0; y < MAP_H; y++) {
+    for (let x = 0; x < MAP_W; x++) {
+      G.visible[y][x] = false;
+      const dist = Math.sqrt((x-px)*(x-px) + (y-py)*(y-py));
+      if (dist <= rng && isVisible(px, py, x, y)) {
+        G.visible[y][x] = true;
+        G.explored[y][x] = true;
+      }
+    }
+  }
+}
+
+// ── 敌人 AI ──
+function enemyTurn() {
+  for (const e of G.enemies) {
+    if (!e.alive) continue;
+    const dx = G.player.x - e.x, dy = G.player.y - e.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const canSee = dist <= e.fov && isVisible(e.x, e.y, G.player.x, G.player.y);
+
+    if (canSee && dist <= 1.5) {
+      // 攻击玩家
+      const dmg = Math.max(1, e.atk - G.player.def + r(-2,2));
+      damagePlayer(dmg);
+      log(`${e.name} 攻击了你！（${dmg} 伤害）`,'danger');
+    } else if (canSee && dist <= e.fov) {
+      // 追踪玩家
+      const nx = e.x + (dx > 0 ? 1 : dx < 0 ? -1 : 0);
+      const ny = e.y + (dy > 0 ? 1 : dy < 0 ? -1 : 0);
+      if (canMoveTo(nx, ny, e.x, e.y) && !enemyAt(nx, ny)) {
+        e.x = nx; e.y = ny;
+      } else if (canMoveTo(nx, e.y, e.x, e.y) && !enemyAt(nx, e.y)) {
+        e.x = nx;
+      } else if (canMoveTo(e.x, ny, e.x, e.y) && !enemyAt(e.x, ny)) {
+        e.y = ny;
+      }
+    }
+    // 不移动（玩家不在视野内则待机）
+  }
+}
+
+function canMoveTo(x, y, fx, fy) {
+  if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) return false;
+  if (G.map[y][x] === TILE.WALL) return false;
+  if (x === G.player.x && y === G.player.y) return false; // 敌人不能站在玩家格
+  return true;
+}
+
+function enemyAt(x, y) {
+  return G.enemies.some(e => e.alive && e.x === x && e.y === y);
+}
+
+function getEnemyAt(x, y) {
+  return G.enemies.find(e => e.alive && e.x === x && e.y === y);
+}
+
+function getItemAt(x, y) {
+  return G.items.find(it => it.x === x && it.y === y);
+}
+
+// ── 玩家行动 ──
+function movePlayer(dx, dy) {
+  if (G.gameOver) return;
+  const nx = G.player.x + dx, ny = G.player.y + dy;
+  if (nx < 0 || nx >= MAP_W || ny < 0 || ny >= MAP_H) return;
+  if (G.map[ny][nx] === TILE.WALL) return;
+
+  // 检查敌人
+  const enemy = getEnemyAt(nx, ny);
+  if (enemy) {
+    attackEnemy(enemy);
+    endTurn();
+    return;
+  }
+
+  G.player.x = nx; G.player.y = ny;
+  G.steps++;
+
+  // 检查物品
+  const item = getItemAt(nx, ny);
+  if (item) {
+    pickUpItem(item);
+  }
+
+  // 检查楼梯
+  if (G.map[ny][nx] === TILE.STAIRS) {
+    descendStairs();
+    return;
+  }
+
+  endTurn();
+}
+
+function attackEnemy(enemy) {
+  const dmg = Math.max(1, G.player.atk - enemy.def + r(-2,3));
+  enemy.hp -= dmg;
+  log(`你攻击了 ${enemy.name}！（${dmg} 伤害）`);
+  updateEnemyInfo();
+
+  if (enemy.hp <= 0) {
+    enemy.alive = false;
+    log(`💀 ${enemy.name} 被击败了！`,'loot');
+    gainXP(enemy.xp);
+    // 掉落物品？
+    if (Math.random() < 0.35) {
+      const drops = ['hp_potion','hp_potion','big_potion','xp_scroll'];
+      const itype = drops[r(0,drops.length-1)];
+      G.items.push({x:enemy.x, y:enemy.y, type:itype, id:G.itemIdCounter++});
+      log(`${enemy.name} 掉落了 ${ITEM_DB[itype].name}`,'loot');
+    }
+    updateEnemyInfo();
+  }
+}
+
+function pickUpItem(item) {
+  G.inventory.push(item);
+  G.items = G.items.filter(it => it.id !== item.id);
+  log(`拾取了 ${ITEM_DB[item.type].name}！`,'loot');
+  renderInventory();
+}
+
+function descendStairs() {
+  if (G.floor >= 5) {
+    gameOver('win');
+    return;
+  }
+  G.floor++;
+  log(`⬇️ 下到第 ${G.floor} 层...`);
+  document.getElementById('floor-num').textContent = G.floor;
+  generateDungeon();
+  renderAll();
+}
+
+function useItem(idx) {
+  if (idx < 0 || idx >= G.inventory.length) return;
+  const item = G.inventory[idx];
+  const def = ITEM_DB[item.type];
+  if (def.use) def.use(G);
+  G.inventory.splice(idx, 1);
+  renderInventory();
+  updateUI();
+}
+
+function waitTurn() {
+  if (G.gameOver) return;
+  G.steps++;
+  log('你等待了一回合...');
+  endTurn();
+}
+
+function endTurn() {
+  enemyTurn();
+  updateFOV();
+  if (!G.gameOver) updateEnemyInfo();
+  updateUI();
+  renderAll();
+}
+
+// ── 游戏结束 ──
+function gameOver(type) {
+  G.gameOver = true;
+  const overlay = document.getElementById('overlay');
+  const card = document.getElementById('overlay-card');
+  overlay.classList.add('active');
+  if (type === 'win') {
+    card.innerHTML = `
+      <h2>🏆 逃离深渊！</h2>
+      <p>你成功穿越了深渊地牢的五层迷宫，击败了无数怪物，收集了古老的宝藏。<br><br>
+      图书馆的出口在你面前打开——阳光洒在你的脸上。<br>你回头看了一眼黑暗的深渊，微笑着走向自由。<br><br>
+      <b>层数:</b> 5 | <b>步数:</b> ${G.steps} | <b>等级:</b> ${G.player.lvl} | <b>击败:</b> ${G.enemies.filter(e=>!e.alive).length}</p>
+      <button onclick="location.reload()">🔄 再次挑战</button>`;
+  } else {
+    card.innerHTML = `
+      <h2>💀 葬身深渊</h2>
+      <p>黑暗吞噬了你。你的遗骨将成为地牢中又一个沉默的警告。<br><br>
+      <b>到达层数:</b> ${G.floor} | <b>步数:</b> ${G.steps} | <b>等级:</b> ${G.player.lvl}</p>
+      <button onclick="location.reload()">🔄 重新开始</button>`;
+  }
+}
+
+// ── 渲染 ──
+function resizeCanvas() {
+  const area = document.getElementById('game-area');
+  const maxW = area.clientWidth - 4;
+  const maxH = area.clientHeight - 100;
+  CELL = Math.floor(Math.min(maxW / MAP_W, maxH / MAP_H));
+  CELL = Math.max(10, Math.min(24, CELL));
+  canvas.width = CELL * MAP_W;
+  canvas.height = CELL * MAP_H;
+}
+window.addEventListener('resize', () => { resizeCanvas(); renderAll(); });
+
+function renderAll() {
+  resizeCanvas();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let y = 0; y < MAP_H; y++) {
+    for (let x = 0; x < MAP_W; x++) {
+      const px = x * CELL, py = y * CELL;
+      if (!G.explored[y][x]) {
+        ctx.fillStyle = '#080810';
+        ctx.fillRect(px, py, CELL, CELL);
+        continue;
+      }
+
+      const visible = G.visible[y][x];
+      if (G.map[y][x] === TILE.WALL) {
+        ctx.fillStyle = visible ? '#3a3050' : '#1a1530';
+        ctx.fillRect(px, py, CELL, CELL);
+        if (visible) {
+          ctx.fillStyle = '#4a4060';
+          ctx.fillRect(px+2, py+2, CELL-4, CELL-4);
+        }
+      } else if (G.map[y][x] === TILE.STAIRS) {
+        ctx.fillStyle = visible ? '#2a1a0a' : '#1a0a00';
+        ctx.fillRect(px, py, CELL, CELL);
+        if (visible) {
+          ctx.fillStyle = '#f0d78c';
+          ctx.font = `${CELL-4}px serif`;
+          ctx.textAlign = 'center';
+          ctx.fillText('⬇️', px+CELL/2, py+CELL-2);
+        }
+      } else {
+        ctx.fillStyle = visible ? '#1e2a18' : '#0f150c';
+        ctx.fillRect(px, py, CELL, CELL);
+        if (visible) {
+          ctx.fillStyle = '#2a3a22';
+          ctx.fillRect(px+1, py+1, CELL-2, CELL-2);
+        }
+      }
+    }
+  }
+
+  // 渲染物品
+  for (const item of G.items) {
+    if (!G.visible[item.y][item.x]) continue;
+    const def = ITEM_DB[item.type];
+    ctx.font = `${CELL-2}px serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(def.glyph, item.x*CELL+CELL/2, item.y*CELL+CELL-2);
+  }
+
+  // 渲染敌人
+  for (const e of G.enemies) {
+    if (!e.alive) continue;
+    if (!G.visible[e.y][e.x]) continue;
+    ctx.font = `${CELL-2}px serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(e.glyph, e.x*CELL+CELL/2, e.y*CELL+CELL-2);
+    // 血条
+    if (e.hp < e.maxHp) {
+      const bw = CELL-4, bh = 3;
+      const bx = e.x*CELL+2, by = e.y*CELL+1;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(bx, by, bw, bh);
+      ctx.fillStyle = '#e74c3c';
+      ctx.fillRect(bx, by, bw*(e.hp/e.maxHp), bh);
+    }
+  }
+
+  // 渲染玩家
+  const px = G.player.x * CELL, py = G.player.y * CELL;
+  ctx.font = `${CELL-2}px serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('🧙', px+CELL/2, py+CELL-2);
+}
+
+function updateUI() {
+  document.getElementById('floor-num').textContent = G.floor;
+  document.getElementById('hp-val').textContent = G.player.hp;
+  document.getElementById('hp-max').textContent = G.player.maxHp;
+  document.getElementById('atk-val').textContent = G.player.atk;
+  document.getElementById('def-val').textContent = G.player.def;
+  document.getElementById('fov-val').textContent = G.player.fovRange;
+  document.getElementById('steps-val').textContent = G.steps;
+  renderInventory();
+}
+
+function renderInventory() {
+  const el = document.getElementById('inv-list');
+  if (G.inventory.length === 0) {
+    el.innerHTML = '<li style="color:var(--dim)">空空如也</li>';
+  } else {
+    el.innerHTML = G.inventory.map((it, i) => {
+      const def = ITEM_DB[it.type];
+      return `<li onclick="useItem(${i})" title="${def.desc}">${def.glyph} ${def.name} <span style="color:var(--dim);font-size:0.8em">[点击使用]</span></li>`;
+    }).join('');
+  }
+}
+
+function updateEnemyInfo() {
+  const el = document.getElementById('enemy-info');
+  // 查找视野内最近的敌人
+  let closest = null, closestDist = Infinity;
+  for (const e of G.enemies) {
+    if (!e.alive) continue;
+    if (!G.visible[e.y] || !G.visible[e.y][e.x]) continue;
+    const dist = Math.sqrt((e.x-G.player.x)**2 + (e.y-G.player.y)**2);
+    if (dist < closestDist) { closest = e; closestDist = dist; }
+  }
+  if (closest) {
+    el.innerHTML = `<span style="color:${closest.color}">${closest.glyph} ${closest.name}</span><br>
+      距离: ${Math.round(closestDist)} | ❤️${closest.hp}/${closest.maxHp} | ⚔️${closest.atk}`;
+  } else {
+    el.innerHTML = '<span style="color:var(--dim)">视野内无敌人</span>';
+  }
+}
+
+// ── 输入处理 ──
+function handleKey(key) {
+  if (G.gameOver) return;
+  const map = {
+    'ArrowUp':    [0,-1], 'w':[0,-1],
+    'ArrowDown':  [0,1],  's':[0,1],
+    'ArrowLeft':  [-1,0], 'a':[-1,0],
+    'ArrowRight': [1,0],  'd':[1,0],
+  };
+  if (map[key]) { movePlayer(map[key][0], map[key][1]); return; }
+  if (key === ' ' || key === 'Spacebar' || key === '.') { waitTurn(); return; }
+  if (key === 'i') {
+    if (G.inventory.length === 0) { log('背包空空如也'); return; }
+    // 自动使用第一个物品
+    useItem(0);
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key.startsWith('Arrow') || ['w','a','s','d',' ','i','.'].includes(e.key)) {
+    e.preventDefault();
+    handleKey(e.key === ' ' ? ' ' : e.key);
+  }
+});
+
+// ── 工具 ──
+function r(min, max) { return Math.floor(Math.random()*(max-min+1))+min; }
+
+// ── 启动 ──
+function init() {
+  G.floor = 1;
+  G.steps = 0;
+  G.player = { x:0, y:0, hp:30, maxHp:30, atk:5, def:2, lvl:1, xp:0, fovRange:7 };
+  G.inventory = [];
+  G.enemies = [];
+  G.items = [];
+  G.gameOver = false;
+  G.logs = [];
+  generateDungeon();
+  updateUI();
+  renderAll();
+  log('🏰 你进入了深渊地牢第1层。找到楼梯(⬇️)深入下一层！','loot');
+  log('WASD/方向键移动 | 撞向敌人攻击 | 空格等待 | I使用物品');
+  updateEnemyInfo();
+  resizeCanvas();
+}
+
+init();
+</script>
+</body>
+</html>

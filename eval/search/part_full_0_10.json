@@ -1,0 +1,114 @@
+{
+  "mode": "full",
+  "agg": {
+    "queries": 10,
+    "P@k": 1.0,
+    "Noise@k": 0.0,
+    "MRR": 0.9,
+    "Hit@k": 0.9,
+    "avg_ms": 2677,
+    "errors": 0
+  },
+  "per_query": [
+    {
+      "id": "T01",
+      "query": "context engineering agents",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 2277,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T02",
+      "query": "attention budget context rot",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 2624,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T03",
+      "query": "progressive disclosure tool loading",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 2603,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T04",
+      "query": "code execution mode agents",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 5490,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T05",
+      "query": "arXiv 2608.25512",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 2178,
+      "err": "",
+      "n": 4
+    },
+    {
+      "id": "T06",
+      "query": "all-MiniLM-L6-v2 sentence transformers",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 2052,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T07",
+      "query": "deepseek-v4.1-flash model",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 2597,
+      "err": "",
+      "n": 4
+    },
+    {
+      "id": "T08",
+      "query": "TS-999 error code",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 2514,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T09",
+      "query": "DeepSeek Harness",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1822,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T10",
+      "query": "Model Context Protocol specification",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 2609,
+      "err": "",
+      "n": 5
+    }
+  ]
+}

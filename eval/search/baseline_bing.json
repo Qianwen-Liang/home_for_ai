@@ -1,0 +1,321 @@
+{
+  "agg": {
+    "queries": 28,
+    "P@k": 0.4071,
+    "Noise@k": 0.25,
+    "MRR": 0.4047,
+    "Hit@k": 0.4643,
+    "avg_ms": 159,
+    "errors": 0
+  },
+  "per_query": [
+    {
+      "id": "T01",
+      "query": "context engineering agents",
+      "category": "tech_long",
+      "n": 8,
+      "p@k": 0.0,
+      "noise@k": 0.6,
+      "mrr": 0.0,
+      "ms": 171,
+      "err": ""
+    },
+    {
+      "id": "T02",
+      "query": "attention budget context rot",
+      "category": "tech_long",
+      "n": 8,
+      "p@k": 0.0,
+      "noise@k": 0.6,
+      "mrr": 0.0,
+      "ms": 167,
+      "err": ""
+    },
+    {
+      "id": "T03",
+      "query": "progressive disclosure tool loading",
+      "category": "tech_long",
+      "n": 8,
+      "p@k": 0.0,
+      "noise@k": 0.8,
+      "mrr": 0.0,
+      "ms": 149,
+      "err": ""
+    },
+    {
+      "id": "T04",
+      "query": "code execution mode agents",
+      "category": "tech_long",
+      "n": 8,
+      "p@k": 0.6,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 140,
+      "err": ""
+    },
+    {
+      "id": "T05",
+      "query": "arXiv 2608.25512",
+      "category": "identifier",
+      "n": 8,
+      "p@k": 0.6,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 155,
+      "err": ""
+    },
+    {
+      "id": "T06",
+      "query": "all-MiniLM-L6-v2 sentence transformers",
+      "category": "identifier",
+      "n": 8,
+      "p@k": 0.0,
+      "noise@k": 0.8,
+      "mrr": 0.0,
+      "ms": 141,
+      "err": ""
+    },
+    {
+      "id": "T07",
+      "query": "deepseek-v4.1-flash model",
+      "category": "identifier",
+      "n": 8,
+      "p@k": 0.8,
+      "noise@k": 0.0,
+      "mrr": 0.5,
+      "ms": 140,
+      "err": ""
+    },
+    {
+      "id": "T08",
+      "query": "TS-999 error code",
+      "category": "identifier",
+      "n": 8,
+      "p@k": 0.2,
+      "noise@k": 0.0,
+      "mrr": 0.333,
+      "ms": 157,
+      "err": ""
+    },
+    {
+      "id": "T09",
+      "query": "DeepSeek Harness",
+      "category": "vendor",
+      "n": 8,
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 169,
+      "err": ""
+    },
+    {
+      "id": "T10",
+      "query": "Model Context Protocol specification",
+      "category": "vendor",
+      "n": 8,
+      "p@k": 0.0,
+      "noise@k": 0.8,
+      "mrr": 0.0,
+      "ms": 187,
+      "err": ""
+    },
+    {
+      "id": "T11",
+      "query": "Anthropic Claude Code best practices",
+      "category": "vendor",
+      "n": 8,
+      "p@k": 0.8,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 156,
+      "err": ""
+    },
+    {
+      "id": "T12",
+      "query": "LangChain retrieval agent",
+      "category": "vendor",
+      "n": 8,
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 140,
+      "err": ""
+    },
+    {
+      "id": "T13",
+      "query": "检索增强生成 混合检索 BM25",
+      "category": "chinese",
+      "n": 8,
+      "p@k": 0.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 137,
+      "err": ""
+    },
+    {
+      "id": "T14",
+      "query": "大模型 上下文工程 注意力预算",
+      "category": "chinese",
+      "n": 8,
+      "p@k": 0.0,
+      "noise@k": 0.2,
+      "mrr": 0.0,
+      "ms": 150,
+      "err": ""
+    },
+    {
+      "id": "T15",
+      "query": "智能体 工具调用 架构设计",
+      "category": "chinese",
+      "n": 8,
+      "p@k": 0.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 154,
+      "err": ""
+    },
+    {
+      "id": "T16",
+      "query": "向量数据库 语义检索 重排序",
+      "category": "chinese",
+      "n": 8,
+      "p@k": 0.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 164,
+      "err": ""
+    },
+    {
+      "id": "T17",
+      "query": "BM25 vs dense retrieval comparison",
+      "category": "compare",
+      "n": 8,
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 150,
+      "err": ""
+    },
+    {
+      "id": "T18",
+      "query": "reciprocal rank fusion RRF",
+      "category": "compare",
+      "n": 8,
+      "p@k": 0.0,
+      "noise@k": 1.0,
+      "mrr": 0.0,
+      "ms": 147,
+      "err": ""
+    },
+    {
+      "id": "T19",
+      "query": "workflow vs agent orchestration",
+      "category": "compare",
+      "n": 8,
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 162,
+      "err": ""
+    },
+    {
+      "id": "T20",
+      "query": "hybrid search sparse dense combination",
+      "category": "compare",
+      "n": 8,
+      "p@k": 0.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 139,
+      "err": ""
+    },
+    {
+      "id": "T21",
+      "query": "sentence-transformers CrossEncoder rerank python",
+      "category": "code",
+      "n": 8,
+      "p@k": 0.0,
+      "noise@k": 1.0,
+      "mrr": 0.0,
+      "ms": 225,
+      "err": ""
+    },
+    {
+      "id": "T22",
+      "query": "sklearn TfidfVectorizer cosine similarity",
+      "category": "code",
+      "n": 8,
+      "p@k": 0.8,
+      "noise@k": 0.0,
+      "mrr": 0.5,
+      "ms": 158,
+      "err": ""
+    },
+    {
+      "id": "T23",
+      "query": "Anthropic contextual retrieval cookbook",
+      "category": "code",
+      "n": 8,
+      "p@k": 0.8,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 144,
+      "err": ""
+    },
+    {
+      "id": "T24",
+      "query": "duckduckgo html endpoint scraping anomaly",
+      "category": "code",
+      "n": 8,
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 178,
+      "err": ""
+    },
+    {
+      "id": "T25",
+      "query": "retrieval augmented generation failure rate",
+      "category": "tech_long",
+      "n": 8,
+      "p@k": 0.0,
+      "noise@k": 1.0,
+      "mrr": 0.0,
+      "ms": 154,
+      "err": ""
+    },
+    {
+      "id": "T26",
+      "query": "tool schema token overhead agent",
+      "category": "tech_long",
+      "n": 8,
+      "p@k": 0.8,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 166,
+      "err": ""
+    },
+    {
+      "id": "T27",
+      "query": "MCP SEPs registry agent skills",
+      "category": "identifier",
+      "n": 8,
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 166,
+      "err": ""
+    },
+    {
+      "id": "T28",
+      "query": "搜索增强 查询改写 多路召回",
+      "category": "chinese",
+      "n": 8,
+      "p@k": 0.0,
+      "noise@k": 0.2,
+      "mrr": 0.0,
+      "ms": 200,
+      "err": ""
+    }
+  ]
+}

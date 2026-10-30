@@ -1,0 +1,29 @@
+{
+  "current_mode": "conservative",
+  "switch_history": [
+    {
+      "from_mode": "aggressive",
+      "to_mode": "conservative",
+      "reason": "手动切换",
+      "trigger": "manual",
+      "health_score": null,
+      "timestamp": "2026-07-25T22:00:04.106983"
+    },
+    {
+      "from_mode": "conservative",
+      "to_mode": "aggressive",
+      "reason": "手动切换",
+      "trigger": "manual",
+      "health_score": null,
+      "timestamp": "2026-07-25T23:58:19.073243"
+    },
+    {
+      "from_mode": "aggressive",
+      "to_mode": "conservative",
+      "reason": "手动切换",
+      "trigger": "manual",
+      "health_score": null,
+      "timestamp": "2026-08-16T14:27:28.326473"
+    }
+  ]
+}

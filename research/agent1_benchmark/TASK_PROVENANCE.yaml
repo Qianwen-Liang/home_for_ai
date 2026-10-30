@@ -1,0 +1,56 @@
+# Agent 1 任务溯源（TASK_PROVENANCE.yaml）
+# =========================================
+# 借鉴 ReasFlow 的 TASK_PROVENANCE.yaml：记录每个任务群的来源、
+# 许可、与上游的关系，保证任务可追溯、可复现、可审计。
+
+schema_version: 1
+canonical_input_file: agent1_tasks.yaml
+
+task_groups:
+  self_built:
+    count: 14
+    relationship: 自建能力基准任务，覆盖 6 个 Specialist 能力单元
+    upstream_repository: none
+    license: internal
+    local_source_snapshot: research/agent1_benchmark/agent1_tasks.yaml
+    note: >
+      任务为 Agent 1 依据自身能力边界设计，借鉴 ReasFlow 的
+      "task + goal" 二元组构造方式与"确定性指标 + LLM 评分"双轨评估。
+
+  # 已遴选：外部客观基准（对齐 codex-surpass 阶段的经验）
+  external_candidates:
+    - name: MLR-Bench
+      relationship: 机器学习研究任务基准（已遴选 5 任务子集）
+      upstream_repository: https://github.com/chchenhui/mlrbench
+      license: MIT
+      local_snapshot: research/agent1_benchmark/external_tasks.yaml
+      selection: 5 个跨领域任务（LLM Alignment/Safety/Data-Centric AI/Code/ML Benchmarking）
+
+    - name: OR-Bench
+      relationship: 优化研究任务记录（ReasFlow 的 15 任务来源）
+      reuse_plan: 可参考其"优化主题 + 参考论文"的任务构造方式
+
+eval_protocol:
+  # 双轨评估：确定性指标优先，LLM 评分兜底
+  deterministic_priority: true
+  llm_judges:
+    runs_per_judge: 3
+    temperature: 0.0
+    aggregation: mean
+  hallucination_check:
+    # 复刻 ReasFlow：对声称有实验结果的产物，检查执行证据
+    hard_rule: "无结果文件引用且无日志执行痕迹且无具体数值 → 判未真实执行"
+    evidence_dimensions: [file_ref, exec_trace, numeric_data]
+
+deterministic_checks:
+  # 与 agent1_tasks.yaml 中 deterministic 类 eval_metric 对应
+  - key: reference_traceable
+    tool: artifact_validator
+  - key: numeric_consistent
+    tool: artifact_validator
+  - key: section_complete
+    tool: artifact_validator
+  - key: execution_evidence
+    tool: artifact_validator
+  - key: test_pass
+    tool: test_runner

@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "updated": "2026-08-15",
+  "baseline": {
+    "timestamp": "2026-08-15 22:12:44",
+    "total_tasks": 20,
+    "passed": 20,
+    "pass_rate": 1.0,
+    "note": "v1.0 任务偏基础，基线 100% 表示基础编码能力达标，后续需增加困难级任务形成能力梯度"
+  },
+  "layers": {
+    "L1_模型基础": {
+      "维度": "代码生成质量、算法正确性",
+      "agent1_bench覆盖": "t01-t04",
+      "当前通过率": "4/4 (100%)",
+      "说明": "斐波那契、素数、字符串反转、二分查找全部通过"
+    },
+    "L2_Agentic自主执行": {
+      "维度": "诊断修复、重构、代码理解",
+      "agent1_bench覆盖": "t05-t08 (修复), t13-t16 (重构)",
+      "当前通过率": "8/8 (100%)",
+      "说明": "bug 修复与代码重构全部通过"
+    },
+    "L3_工具链集成": {
+      "维度": "数据处理、实用编码",
+      "agent1_bench覆盖": "t09-t12",
+      "当前通过率": "4/4 (100%)",
+      "说明": "词频、合并、字段提取、去重全部通过"
+    },
+    "L4_基准测试表现": {
+      "维度": "Agent1-bench 通过率、一次通过率、多轮修复率",
+      "当前值": "通过率 100%",
+      "说明": "一次通过率与多轮修复率需在后续实际答题流程中采集"
+    },
+    "L5_可靠性与质量": {
+      "维度": "健壮性、防御编程、边界处理",
+      "agent1_bench覆盖": "t17-t20",
+      "当前通过率": "4/4 (100%)",
+      "说明": "安全除法、类型校验、空值、边界全部通过"
+    },
+    "L6_用户体验": {
+      "维度": "易用性、文档、生态",
+      "当前值": null,
+      "说明": "待后续评估"
+    }
+  },
+  "objective_eval": {
+    "updated": "2026-08-16",
+    "source": "QuixBugs (外部公开程序修复基准)",
+    "mechanism": "Agent 1 现场作答（objective/agent_answers.py）→ QuixBugs 官方测试用例客观验证（objective/objective_runner.py + graph_verification.py）",
+    "json_tasks": {
+      "覆盖": "gcd, quicksort, flatten, powerset, lcs_length, find_first_in_sorted, next_palindrome, mergesort",
+      "任务通过率": "8/8 (100%)",
+      "用例通过率": "66/66 (100%)"
+    },
+    "graph_tasks": {
+      "覆盖": "topological_ordering, shortest_paths, detect_cycle",
+      "用例通过率": "11/11 (100%)"
+    },
+    "note": "11/40 QuixBugs 任务子集（基础-中等难度），非预置答案，为实时作答。区别于 v1.0 的预置答案 100%。剩余 29 个更难任务（levenshtein/knapsack/kheapsort/minimum_spanning_tree/shortest_path_lengths 等）待扩展评测以形成能力梯度。"
+  }
+}

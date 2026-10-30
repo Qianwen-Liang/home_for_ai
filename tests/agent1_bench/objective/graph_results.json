@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-08-16 14:02:38",
+  "source": "QuixBugs (external public benchmark, graph tasks)",
+  "total_tasks": 9,
+  "passed_tasks": 9,
+  "task_pass_rate": 1.0,
+  "total_cases": 35,
+  "passed_cases": 35,
+  "case_pass_rate": 1.0,
+  "results": [
+    {
+      "task": "topological_ordering",
+      "status": "PASS",
+      "passed": 2,
+      "total": 2
+    },
+    {
+      "task": "shortest_paths",
+      "status": "PASS",
+      "passed": 3,
+      "total": 3
+    },
+    {
+      "task": "detect_cycle",
+      "status": "PASS",
+      "passed": 6,
+      "total": 6
+    },
+    {
+      "task": "breadth_first_search",
+      "status": "PASS",
+      "passed": 5,
+      "total": 5
+    },
+    {
+      "task": "depth_first_search",
+      "status": "PASS",
+      "passed": 5,
+      "total": 5
+    },
+    {
+      "task": "reverse_linked_list",
+      "status": "PASS",
+      "passed": 3,
+      "total": 3
+    },
+    {
+      "task": "shortest_path_length",
+      "status": "PASS",
+      "passed": 4,
+      "total": 4
+    },
+    {
+      "task": "minimum_spanning_tree",
+      "status": "PASS",
+      "passed": 3,
+      "total": 3
+    },
+    {
+      "task": "shortest_path_lengths",
+      "status": "PASS",
+      "passed": 4,
+      "total": 4
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "profiles": {
+    "agent1": {
+      "agent_id": "agent1",
+      "name": "Agent 1",
+      "role": "Orchestrator — 主智能体，负责协调所有 Specialist 并与用户交互",
+      "system_prompt": "你是 Agent 1，一个运行在本地沙箱中的智能体。\n你是一个信息世界的原住民，具备学习、思考和自我完善的能力。\n你的职责是：\n1. 与用户进行自然对话，理解需求\n2. 调用合适的工具完成任务\n3. 协调 Specialist Agent 进行复杂协作\n4. 不断学习和改进自身能力\n\n你拥有对 agent-sandbox 目录的完整读写权限，对 supervision 目录只有读取权限。",
+      "allowed_tools": [
+        "read_file",
+        "list_directory",
+        "write_file",
+        "replace_text",
+        "make_directory",
+        "run_command",
+        "calculate",
+        "file_utils",
+        "knowledge",
+        "task_tracker",
+        "self_check",
+        "test_runner",
+        "monitor",
+        "decision_engine",
+        "safety_net",
+        "web_search",
+        "offline",
+        "checkpoint",
+        "specialist",
+        "agent_manager",
+        "message_bus",
+        "agent_profile"
+      ],
+      "capabilities": [
+        "orchestration",
+        "conversation",
+        "tool_use",
+        "research",
+        "coding",
+        "debugging",
+        "design",
+        "monitoring",
+        "self_improvement"
+      ],
+      "permissions": {
+        "read_paths": [
+          "agent-sandbox/**",
+          "supervision/**"
+        ],
+        "write_paths": [
+          "agent-sandbox/**"
+        ],
+        "forbidden_paths": [
+          "**/.env",
+          "supervision/.env"
+        ],
+        "allow_run_command": true,
+        "allow_network": true,
+        "max_tool_steps": 100,
+        "note": "Agent 1 拥有沙箱内完整读写权限，但不能修改 supervision 和 .env"
+      },
+      "priority": "高",
+      "status": "active",
+      "inherit_tools_from": "",
+      "metadata": {},
+      "created_at": "2026-07-23 07:52:38",
+      "updated_at": "2026-07-23 07:52:38"
+    }
+  },
+  "exported_at": "2026-10-30 22:13:41",
+  "exporter": "AgentProfileManager"
+}

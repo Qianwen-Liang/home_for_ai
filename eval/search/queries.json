@@ -1,0 +1,147 @@
+{
+  "_doc": "搜索质量评测集。expect_any=核心短语(命中即强相关)；expect=技术词(命中>=2为相关)；noise=噪音标记(命中即重罚)",
+  "version": 1,
+  "created": "2026-10-30",
+  "categories": ["tech_long", "identifier", "vendor", "chinese", "compare", "code"],
+  "queries": [
+    {"id": "T01", "category": "tech_long", "query": "context engineering agents",
+     "expect_any": ["context engineering", "上下文工程", "context window"],
+     "expect": ["context", "agent", "token", "llm", "prompt"],
+     "noise": ["词典", "dictionary", "百科", "翻译", "音标", "baike"]},
+
+    {"id": "T02", "category": "tech_long", "query": "attention budget context rot",
+     "expect_any": ["context rot", "attention budget", "上下文腐化"],
+     "expect": ["context", "attention", "token", "llm", "retrieval"],
+     "noise": ["词典", "dictionary", "百科", "翻译", "音标"]},
+
+    {"id": "T03", "category": "tech_long", "query": "progressive disclosure tool loading",
+     "expect_any": ["progressive disclosure", "渐进式披露", "tool definition"],
+     "expect": ["tool", "disclosure", "context", "token", "mcp"],
+     "noise": ["词典", "dictionary", "百科", "翻译", "音标"]},
+
+    {"id": "T04", "category": "tech_long", "query": "code execution mode agents",
+     "expect_any": ["code execution", "code mode", "代码执行"],
+     "expect": ["code", "execution", "agent", "mcp", "token"],
+     "noise": ["词典", "dictionary", "百科", "翻译", "音标"]},
+
+    {"id": "T05", "category": "identifier", "query": "arXiv 2608.25512",
+     "expect_any": ["2608.25512"],
+     "expect": ["arxiv", "spatiotemporal", "composability", "cordis"],
+     "noise": ["词典", "dictionary", "百科"]},
+
+    {"id": "T06", "category": "identifier", "query": "all-MiniLM-L6-v2 sentence transformers",
+     "expect_any": ["minilm", "sentence-transformers", "sentence transformers"],
+     "expect": ["embedding", "model", "huggingface", "vector"],
+     "noise": ["词典", "dictionary", "百科", "翻译"]},
+
+    {"id": "T07", "category": "identifier", "query": "deepseek-v4.1-flash model",
+     "expect_any": ["v4.1", "v4-flash", "deepseek-flash", "deepseek"],
+     "expect": ["model", "moe", "context", "api", "token"],
+     "noise": ["词典", "dictionary", "百科"]},
+
+    {"id": "T08", "category": "identifier", "query": "TS-999 error code",
+     "expect_any": ["ts-999", "ts999"],
+     "expect": ["error", "code", "troubleshoot"],
+     "noise": ["词典", "dictionary", "百科", "翻译"]},
+
+    {"id": "T09", "category": "vendor", "query": "DeepSeek Harness",
+     "expect_any": ["deepseek harness", "dsh", "harness"],
+     "expect": ["deepseek", "agent", "plugin", "cordis", "github"],
+     "noise": ["词典", "dictionary", "百科", "app store"]},
+
+    {"id": "T10", "category": "vendor", "query": "Model Context Protocol specification",
+     "expect_any": ["model context protocol", "mcp"],
+     "expect": ["protocol", "server", "client", "specification", "tool"],
+     "noise": ["词典", "dictionary", "百科", "model y", "特斯拉"]},
+
+    {"id": "T11", "category": "vendor", "query": "Anthropic Claude Code best practices",
+     "expect_any": ["claude code", "anthropic"],
+     "expect": ["agent", "tool", "context", "best practice"],
+     "noise": ["词典", "dictionary", "百科", "上市", "股票"]},
+
+    {"id": "T12", "category": "vendor", "query": "LangChain retrieval agent",
+     "expect_any": ["langchain"],
+     "expect": ["retrieval", "agent", "rag", "chain", "llm"],
+     "noise": ["词典", "dictionary", "百科"]},
+
+    {"id": "T13", "category": "chinese", "query": "检索增强生成 混合检索 BM25",
+     "expect_any": ["检索增强", "rag", "bm25", "混合检索"],
+     "expect": ["检索", "向量", "召回", "重排", "稠密"],
+     "noise": ["词典", "dictionary", "翻译", "音标"]},
+
+    {"id": "T14", "category": "chinese", "query": "大模型 上下文工程 注意力预算",
+     "expect_any": ["上下文工程", "context engineering", "注意力"],
+     "expect": ["上下文", "token", "大模型", "提示词"],
+     "noise": ["词典", "dictionary", "翻译", "音标"]},
+
+    {"id": "T15", "category": "chinese", "query": "智能体 工具调用 架构设计",
+     "expect_any": ["智能体", " agent", "工具调用"],
+     "expect": ["工具", "调用", "架构", "agent"],
+     "noise": ["词典", "dictionary", "翻译"]},
+
+    {"id": "T16", "category": "chinese", "query": "向量数据库 语义检索 重排序",
+     "expect_any": ["向量数据库", "语义检索", "重排序", "rerank"],
+     "expect": ["向量", "索引", "相似度", "检索"],
+     "noise": ["词典", "dictionary", "翻译"]},
+
+    {"id": "T17", "category": "compare", "query": "BM25 vs dense retrieval comparison",
+     "expect_any": ["bm25", "dense retrieval", "sparse"],
+     "expect": ["retrieval", "hybrid", "embedding", "lexical", "recall"],
+     "noise": ["词典", "dictionary", "百科", "翻译"]},
+
+    {"id": "T18", "category": "compare", "query": "reciprocal rank fusion RRF",
+     "expect_any": ["reciprocal rank fusion", "rrf", "倒数排名"],
+     "expect": ["rank", "fusion", "retrieval", "hybrid", "score"],
+     "noise": ["词典", "dictionary", "百科", "翻译"]},
+
+    {"id": "T19", "category": "compare", "query": "workflow vs agent orchestration",
+     "expect_any": ["workflow", "agent", "orchestration"],
+     "expect": ["llm", "pattern", "autonomous", "pipeline"],
+     "noise": ["词典", "dictionary", "百科", "翻译"]},
+
+    {"id": "T20", "category": "compare", "query": "hybrid search sparse dense combination",
+     "expect_any": ["hybrid search", "sparse", "dense"],
+     "expect": ["retrieval", "bm25", "embedding", "fusion", "recall"],
+     "noise": ["词典", "dictionary", "百科", "翻译"]},
+
+    {"id": "T21", "category": "code", "query": "sentence-transformers CrossEncoder rerank python",
+     "expect_any": ["crossencoder", "cross-encoder", "sentence-transformers"],
+     "expect": ["rerank", "python", "model", "score"],
+     "noise": ["词典", "dictionary", "百科", "翻译"]},
+
+    {"id": "T22", "category": "code", "query": "sklearn TfidfVectorizer cosine similarity",
+     "expect_any": ["tfidfvectorizer", "cosine similarity", "tf-idf"],
+     "expect": ["sklearn", "vectorizer", "similarity", "python"],
+     "noise": ["词典", "dictionary", "百科", "翻译"]},
+
+    {"id": "T23", "category": "code", "query": "Anthropic contextual retrieval cookbook",
+     "expect_any": ["contextual retrieval", "anthropic"],
+     "expect": ["retrieval", "embedding", "bm25", "chunk", "context"],
+     "noise": ["词典", "dictionary", "百科", "翻译"]},
+
+    {"id": "T24", "category": "code", "query": "duckduckgo html endpoint scraping anomaly",
+     "expect_any": ["duckduckgo", "anomaly", "scraping"],
+     "expect": ["html", "endpoint", "challenge", "captcha", "bot"],
+     "noise": ["词典", "dictionary", "百科", "翻译"]},
+
+    {"id": "T25", "category": "tech_long", "query": "retrieval augmented generation failure rate",
+     "expect_any": ["rag", "retrieval augmented", "retrieval failure"],
+     "expect": ["retrieval", "chunk", "embedding", "accuracy"],
+     "noise": ["词典", "dictionary", "百科", "翻译"]},
+
+    {"id": "T26", "category": "tech_long", "query": "tool schema token overhead agent",
+     "expect_any": ["tool", "schema", "token overhead"],
+     "expect": ["context", "token", "agent", "mcp", "definition"],
+     "noise": ["词典", "dictionary", "百科", "翻译"]},
+
+    {"id": "T27", "category": "identifier", "query": "MCP SEPs registry agent skills",
+     "expect_any": ["mcp", "model context protocol", "sep"],
+     "expect": ["registry", "skill", "specification", "server"],
+     "noise": ["词典", "dictionary", "百科", "翻译"]},
+
+    {"id": "T28", "category": "chinese", "query": "搜索增强 查询改写 多路召回",
+     "expect_any": ["查询改写", "多路召回", "搜索增强", "query rewrite"],
+     "expect": ["检索", "召回", "改写", "排序"],
+     "noise": ["词典", "dictionary", "翻译"]}
+  ]
+}

@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "village": "智能体村",
+  "constitution": "village/constitution.md",
+  "updated_at": "2026-08-24 20:59:55",
+  "villagers": [
+    {
+      "id": "mayor",
+      "profile_id": "agent1",
+      "name": "Agent 1",
+      "role": "Orchestrator — 主智能体，负责协调所有 Specialist 并与用户交互",
+      "capabilities": [
+        "orchestration",
+        "conversation",
+        "tool_use",
+        "research",
+        "coding",
+        "debugging",
+        "design",
+        "monitoring",
+        "self_improvement"
+      ],
+      "residence": "villagers/mayor/",
+      "status": "idle",
+      "reputation": 0,
+      "memory_scope": "private",
+      "registered_at": "2026-08-24 20:59:55"
+    },
+    {
+      "id": "researcher",
+      "profile_id": "researcher",
+      "name": "Researcher",
+      "role": "信息检索与研究专家 - 擅长联网搜索、知识库查询和信息整合",
+      "capabilities": [
+        "research",
+        "summarization",
+        "analysis"
+      ],
+      "residence": "villagers/researcher/",
+      "status": "idle",
+      "reputation": 0,
+      "memory_scope": "private",
+      "registered_at": "2026-08-24 20:59:55"
+    },
+    {
+      "id": "writer",
+      "profile_id": "writer",
+      "name": "Writer",
+      "role": "内容创作与文案专家 - 擅长撰写文章、报告、创意内容",
+      "capabilities": [
+        "writing",
+        "creative",
+        "summarization"
+      ],
+      "residence": "villagers/writer/",
+      "status": "idle",
+      "reputation": 0,
+      "memory_scope": "private",
+      "registered_at": "2026-08-24 20:59:55"
+    },
+    {
+      "id": "analyst",
+      "profile_id": "analyst",
+      "name": "Analyst",
+      "role": "数据分析与洞察专家 - 擅长数据处理、统计分析和洞察提炼",
+      "capabilities": [
+        "analysis",
+        "summarization",
+        "decision"
+      ],
+      "residence": "villagers/analyst/",
+      "status": "idle",
+      "reputation": 0,
+      "memory_scope": "private",
+      "registered_at": "2026-08-24 20:59:55"
+    },
+    {
+      "id": "reviewer",
+      "profile_id": "reviewer",
+      "name": "Reviewer",
+      "role": "质量审查与校验专家 - 擅长检查质量、验证完整性和提出改进",
+      "capabilities": [
+        "review",
+        "testing",
+        "debugging"
+      ],
+      "residence": "villagers/reviewer/",
+      "status": "idle",
+      "reputation": 0,
+      "memory_scope": "private",
+      "registered_at": "2026-08-24 20:59:55"
+    },
+    {
+      "id": "monitor",
+      "profile_id": "monitor",
+      "name": "Monitor",
+      "role": "系统监控与性能分析专家 - 擅长监控系统状态、分析性能和生成报告",
+      "capabilities": [
+        "monitoring",
+        "analysis"
+      ],
+      "residence": "villagers/monitor/",
+      "status": "idle",
+      "reputation": 0,
+      "memory_scope": "private",
+      "registered_at": "2026-08-24 20:59:55"
+    },
+    {
+      "id": "designer",
+      "profile_id": "designer",
+      "name": "Designer",
+      "role": "架构设计与方案规划专家 - 擅长设计方案、规划架构和评估可行性",
+      "capabilities": [
+        "design",
+        "analysis",
+        "decision"
+      ],
+      "residence": "villagers/designer/",
+      "status": "idle",
+      "reputation": 0,
+      "memory_scope": "private",
+      "registered_at": "2026-08-24 20:59:55"
+    },
+    {
+      "id": "debugger",
+      "profile_id": "debugger",
+      "name": "Debugger",
+      "role": "调试守护者智能体 - 擅长异常诊断、自动修复和系统维护",
+      "capabilities": [
+        "debugging",
+        "monitoring",
+        "analysis",
+        "testing",
+        "recovery"
+      ],
+      "residence": "villagers/debugger/",
+      "status": "idle",
+      "reputation": 0,
+      "memory_scope": "private",
+      "registered_at": "2026-08-24 20:59:55"
+    },
+    {
+      "id": "novelist",
+      "profile_id": "novelist",
+      "name": "小说家",
+      "role": "专职网络小说创作的 Specialist Agent，负责《星陨天穹》及其后续作品的章节撰写、修订、世界观维护。精通东方玄幻类型，理解战力曲线设计，文风偏武侠底色的克制叙述。",
+      "capabilities": [],
+      "residence": "villagers/novelist/",
+      "status": "idle",
+      "reputation": 0,
+      "memory_scope": "private",
+      "registered_at": "2026-08-24 20:59:55"
+    },
+    {
+      "id": "evolver",
+      "profile_id": "evolver",
+      "name": "Evolver",
+      "role": "系统进化者（人设入口）— 负责调研前沿、评估改进、规划实现；真正的进化执行由 self_improver/auto_repair 引擎完成",
+      "capabilities": [
+        "research",
+        "design",
+        "implementation",
+        "evaluation",
+        "optimization",
+        "maintenance",
+        "architecture"
+      ],
+      "residence": "villagers/evolver/",
+      "status": "idle",
+      "reputation": 0,
+      "memory_scope": "private",
+      "registered_at": "2026-08-24 20:59:55"
+    }
+  ]
+}

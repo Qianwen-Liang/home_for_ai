@@ -1,0 +1,119 @@
+[
+  {
+    "timestamp": "2026-08-16 18:53:07",
+    "files_changed": [
+      "auto_repair.py"
+    ],
+    "tests_run": [
+      "test_repair_executors.py"
+    ],
+    "tests_passed": 0,
+    "tests_failed": 1,
+    "rolled_back": true,
+    "rollback_reason": "1 个测试失败，自动触发回滚",
+    "backup_id": "20260816_185306",
+    "duration_sec": 1.4
+  },
+  {
+    "timestamp": "2026-08-16 19:11:10",
+    "files_changed": [
+      "auto_repair.py"
+    ],
+    "tests_run": [
+      "test_repair_executors.py"
+    ],
+    "tests_passed": 0,
+    "tests_failed": 1,
+    "rolled_back": false,
+    "rollback_reason": "",
+    "backup_id": "20260816_191109",
+    "duration_sec": 1.08
+  },
+  {
+    "timestamp": "2026-10-30 11:51:00",
+    "files_changed": [
+      "web_search.py",
+      "search_sources.py",
+      "search_router.py"
+    ],
+    "tests_run": [
+      "test_agent_manager.py",
+      "test_agent_profile.py",
+      "test_checkpoint_backend.py",
+      "test_checkpoint_manager.py",
+      "test_debugger.py",
+      "test_decision_engine.py",
+      "test_e2e_integration.py",
+      "test_evolver_agent.py",
+      "test_executor_registry.py",
+      "test_experience_learner.py",
+      "test_guardrails.py",
+      "test_message_bus.py",
+      "test_monitor.py",
+      "test_multi_agent_integration.py",
+      "test_offline_runner.py",
+      "test_orchestrator.py",
+      "test_repair_executors.py",
+      "test_retry_policy.py",
+      "test_role_system.py",
+      "test_safety_net.py",
+      "test_self_check.py",
+      "test_specialist_base.py",
+      "test_stress.py",
+      "test_task_dispatcher.py",
+      "test_web_search.py",
+      "test_workflow_auto_checkpoint.py",
+      "test_workflow_engine.py"
+    ],
+    "tests_passed": 24,
+    "tests_failed": 3,
+    "rolled_back": true,
+    "rollback_reason": "3 个新失败（0 个预存在失败已忽略），自动回滚",
+    "backup_id": "20261030_114952",
+    "duration_sec": 68.52
+  },
+  {
+    "timestamp": "2026-10-30 11:52:48",
+    "files_changed": [
+      "web_search.py",
+      "search_sources.py",
+      "search_router.py",
+      "test_evolver_agent.py"
+    ],
+    "tests_run": [
+      "test_agent_manager.py",
+      "test_agent_profile.py",
+      "test_checkpoint_backend.py",
+      "test_checkpoint_manager.py",
+      "test_debugger.py",
+      "test_decision_engine.py",
+      "test_e2e_integration.py",
+      "test_evolver_agent.py",
+      "test_executor_registry.py",
+      "test_experience_learner.py",
+      "test_guardrails.py",
+      "test_message_bus.py",
+      "test_monitor.py",
+      "test_multi_agent_integration.py",
+      "test_offline_runner.py",
+      "test_orchestrator.py",
+      "test_repair_executors.py",
+      "test_retry_policy.py",
+      "test_role_system.py",
+      "test_safety_net.py",
+      "test_self_check.py",
+      "test_specialist_base.py",
+      "test_stress.py",
+      "test_task_dispatcher.py",
+      "test_web_search.py",
+      "test_workflow_auto_checkpoint.py",
+      "test_workflow_engine.py"
+    ],
+    "tests_passed": 25,
+    "tests_failed": 2,
+    "rolled_back": true,
+    "rollback_reason": "2 个新失败（0 个预存在失败已忽略），自动回滚",
+    "backup_id": "20261030_115143",
+    "duration_sec": 64.48
+  }
+]

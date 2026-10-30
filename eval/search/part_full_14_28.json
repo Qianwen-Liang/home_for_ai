@@ -1,0 +1,154 @@
+{
+  "mode": "full",
+  "agg": {
+    "queries": 14,
+    "P@k": 0.8571,
+    "Noise@k": 0.0,
+    "MRR": 0.5714,
+    "Hit@k": 0.5714,
+    "avg_ms": 1786,
+    "errors": 0
+  },
+  "per_query": [
+    {
+      "id": "T15",
+      "query": "智能体 工具调用 架构设计",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1189,
+      "err": "",
+      "n": 3
+    },
+    {
+      "id": "T16",
+      "query": "向量数据库 语义检索 重排序",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 2255,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T17",
+      "query": "BM25 vs dense retrieval comparison",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1374,
+      "err": "",
+      "n": 4
+    },
+    {
+      "id": "T18",
+      "query": "reciprocal rank fusion RRF",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1440,
+      "err": "",
+      "n": 4
+    },
+    {
+      "id": "T19",
+      "query": "workflow vs agent orchestration",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1494,
+      "err": "",
+      "n": 3
+    },
+    {
+      "id": "T20",
+      "query": "hybrid search sparse dense combination",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 1661,
+      "err": "",
+      "n": 3
+    },
+    {
+      "id": "T21",
+      "query": "sentence-transformers CrossEncoder rerank python",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1154,
+      "err": "",
+      "n": 3
+    },
+    {
+      "id": "T22",
+      "query": "sklearn TfidfVectorizer cosine similarity",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1343,
+      "err": "",
+      "n": 3
+    },
+    {
+      "id": "T23",
+      "query": "Anthropic contextual retrieval cookbook",
+      "p@k": 0.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 3275,
+      "err": "",
+      "n": 0
+    },
+    {
+      "id": "T24",
+      "query": "duckduckgo html endpoint scraping anomaly",
+      "p@k": 0.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 2276,
+      "err": "",
+      "n": 0
+    },
+    {
+      "id": "T25",
+      "query": "retrieval augmented generation failure rate",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 945,
+      "err": "",
+      "n": 3
+    },
+    {
+      "id": "T26",
+      "query": "tool schema token overhead agent",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 3232,
+      "err": "",
+      "n": 1
+    },
+    {
+      "id": "T27",
+      "query": "MCP SEPs registry agent skills",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 1227,
+      "err": "",
+      "n": 4
+    },
+    {
+      "id": "T28",
+      "query": "搜索增强 查询改写 多路召回",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 2143,
+      "err": "",
+      "n": 3
+    }
+  ]
+}

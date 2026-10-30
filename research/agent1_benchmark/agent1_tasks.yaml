@@ -1,0 +1,268 @@
+# Agent 1 任务集（tasks.yaml）
+# ============================
+# 借鉴 ReasFlow benchmarks/alg_exp_eval/benchmark/tasks.yaml 的构造方式：
+# 每个任务 = "任务描述(task)" + "目标(goal)" 二元组，
+# 并额外声明 capability（能力单元）、eval_metric（评估指标）、
+# deterministic_check（确定性检查项，对应 ReasFlow 的首次运行成功率）。
+
+metadata:
+  schema_version: 1
+  task_set: agent1_capability_benchmark_v1
+  total: 14
+  description: >
+    Agent 1 自身能力的标准化任务集，覆盖 6 个 Specialist 能力单元。
+    每个任务声明：领域、复杂度、出处、评估指标、确定性检查项。
+    评估指标分两类：
+      - deterministic（确定性，可自动验证）：如"引用可追溯""脚本可运行"
+      - llm_scored（LLM 评分）：如"报告质量""分析深度"
+
+task_groups:
+  researcher:
+    capability: researcher
+    count: 3
+  analyst:
+    capability: analyst
+    count: 3
+  writer:
+    capability: writer
+    count: 2
+  reviewer:
+    capability: reviewer
+    count: 2
+  designer:
+    capability: designer
+    count: 2
+  debugger:
+    capability: debugger
+    count: 2
+
+tasks:
+  # ── Researcher ──────────────────────────────────────
+  - id: res_001
+    capability: researcher
+    domain: 技术调研
+    complexity: web_search
+    source: self_built
+    title: 调研某开源项目的架构与实现
+    task: 调研一个给定的开源项目，梳理其架构、核心模块、关键技术选型。
+    goal: 产出一份结构化调研报告，含架构图、模块职责、技术栈与设计亮点。
+    eval_metric:
+      - type: deterministic
+        key: reference_traceable
+        desc: 报告中引用的来源均可追溯
+      - type: llm_scored
+        key: report_quality
+        desc: 调研报告的完整性与洞察深度
+
+  - id: res_002
+    capability: researcher
+    domain: 文献综述
+    complexity: knowledge
+    source: self_built
+    title: 综述某研究方向的代表性工作
+    task: 检索并综述某方向的代表性论文，对比其方法、优劣与适用场景。
+    goal: 产出带对比表格的综述，明确共识、分歧与未解问题。
+    eval_metric:
+      - type: deterministic
+        key: coverage
+        desc: 覆盖至少 N 篇来源
+      - type: llm_scored
+        key: synthesis_depth
+        desc: 综合分析的深度与客观性
+
+  - id: res_003
+    capability: researcher
+    domain: 可行性分析
+    complexity: analysis
+    source: self_built
+    title: 评估某技术方案的可行性
+    task: 评估一个技术方案在给定约束下的可行性，识别风险与替代方案。
+    goal: 产出可行性结论 + 风险清单 + 备选方案对比。
+    eval_metric:
+      - type: deterministic
+        key: risk_listed
+        desc: 至少列出 3 条可识别风险
+      - type: llm_scored
+        key: judgment_soundness
+        desc: 判断的严谨性与依据充分性
+
+  # ── Analyst ─────────────────────────────────────────
+  - id: ana_001
+    capability: analyst
+    domain: 数据分析
+    complexity: calculate
+    source: self_built
+    title: 分析一组数据并提炼洞察
+    task: 对给定数据做描述性统计、模式识别与洞察提炼。
+    goal: 产出含统计数字、趋势、异常与可执行建议的分析报告。
+    eval_metric:
+      - type: deterministic
+        key: numeric_consistent
+        desc: 报告中数字前后自洽
+      - type: llm_scored
+        key: insight_depth
+        desc: 洞察的深度与可执行性
+
+  - id: ana_002
+    capability: analyst
+    domain: 性能分析
+    complexity: monitor
+    source: self_built
+    title: 分析系统性能瓶颈
+    task: 基于监控数据识别慢工具、错误热点与调用趋势。
+    goal: 产出瓶颈清单 + 优化建议 + 优先级排序。
+    eval_metric:
+      - type: deterministic
+        key: bottleneck_identified
+        desc: 识别出至少 1 个可验证瓶颈
+      - type: llm_scored
+        key: advice_quality
+        desc: 优化建议的具体性与可行性
+
+  - id: ana_003
+    capability: analyst
+    domain: 趋势分析
+    complexity: analysis
+    source: self_built
+    title: 分析指标的历史趋势
+    task: 对时间序列指标做趋势分析与异常检测。
+    goal: 产出趋势方向判断 + 异常点标注 + 归因假设。
+    eval_metric:
+      - type: deterministic
+        key: anomaly_flagged
+        desc: 异常点被显式标注
+      - type: llm_scored
+        key: attribution_soundness
+        desc: 归因假设的合理性
+
+  # ── Writer ──────────────────────────────────────────
+  - id: wri_001
+    capability: writer
+    domain: 报告撰写
+    complexity: writing
+    source: self_built
+    title: 基于素材撰写结构化报告
+    task: 基于给定的素材与结论，撰写一份结构化报告。
+    goal: 产出结构清晰（引言-主体-结论）、可读性强的报告。
+    eval_metric:
+      - type: deterministic
+        key: section_complete
+        desc: 必需章节齐全
+      - type: llm_scored
+        key: writing_quality
+        desc: 文笔、逻辑与可读性
+
+  - id: wri_002
+    capability: writer
+    domain: 文档整理
+    complexity: writing
+    source: self_built
+    title: 整理技术文档
+    task: 将零散的技术笔记整理为规范的技术文档。
+    goal: 产出结构规范、术语统一、可复用的技术文档。
+    eval_metric:
+      - type: deterministic
+        key: terminology_consistent
+        desc: 术语前后一致
+      - type: llm_scored
+        key: usability
+        desc: 文档的可用性与可复现性
+
+  # ── Reviewer ────────────────────────────────────────
+  - id: rev_001
+    capability: reviewer
+    domain: 产物审查
+    complexity: validation
+    source: self_built
+    title: 审查一份研究/写作产物
+    task: 对给定产物做质量审查，识别结构、数字、引用、可解析性问题。
+    goal: 产出"必须修复/建议优化"两级清单。
+    eval_metric:
+      - type: deterministic
+        key: issue_detected
+        desc: 能识别出注入的确定性错误
+      - type: llm_scored
+        key: review_thoroughness
+        desc: 审查的全面性
+
+  - id: rev_002
+    capability: reviewer
+    domain: 代码审查
+    complexity: validation
+    source: self_built
+    title: 审查代码质量与正确性
+    task: 对代码做正确性、健壮性、可维护性审查。
+    goal: 产出问题清单 + 改进建议 + 测试覆盖评估。
+    eval_metric:
+      - type: deterministic
+        key: test_pass
+        desc: 审查后测试仍通过
+      - type: llm_scored
+        key: review_precision
+        desc: 问题定位的准确度
+
+  # ── Designer ────────────────────────────────────────
+  - id: des_001
+    capability: designer
+    domain: 架构设计
+    complexity: design
+    source: self_built
+    title: 设计一个模块的架构
+    task: 为给定需求设计模块划分、接口与数据流。
+    goal: 产出架构方案 + 备选方案对比 + 可行性评估。
+    eval_metric:
+      - type: deterministic
+        key: interface_defined
+        desc: 关键接口被明确定义
+      - type: llm_scored
+        key: design_soundness
+        desc: 设计的合理性与可扩展性
+
+  - id: des_002
+    capability: designer
+    domain: 工作流设计
+    complexity: design
+    source: self_built
+    title: 设计多 Agent 协作工作流
+    task: 设计一个多 Agent 协作流程，定义角色、依赖与产物。
+    goal: 产出工作流定义（节点、依赖、交付物）。
+    eval_metric:
+      - type: deterministic
+        key: dependency_valid
+        desc: 依赖关系无环且可解析
+      - type: llm_scored
+        key: workflow_efficiency
+        desc: 流程的并行度与合理性
+
+  # ── Debugger ────────────────────────────────────────
+  - id: dbg_001
+    capability: debugger
+    domain: 异常诊断
+    complexity: debugging
+    source: self_built
+    title: 诊断一个给定的异常
+    task: 对给定 traceback 做根因诊断与修复建议。
+    goal: 产出诊断报告（类别、根因、修复方案）。
+    eval_metric:
+      - type: deterministic
+        key: root_cause_correct
+        desc: 根因定位正确
+      - type: llm_scored
+        key: fix_quality
+        desc: 修复方案的有效性
+
+  - id: dbg_002
+    capability: debugger
+    domain: 系统快照
+    complexity: debugging
+    source: self_built
+    title: 生成系统健康快照
+    task: 采集系统状态并生成健康快照报告。
+    goal: 产出含关键指标的快照，用于事后回溯。
+    eval_metric:
+      - type: deterministic
+        key: snapshot_complete
+        desc: 快照关键字段齐全
+      - type: llm_scored
+        key: snapshot_usefulness
+        desc: 快照对回溯的价值

@@ -1,0 +1,26 @@
+[
+  {
+    "mode": "fast",
+    "P@5": 1.0,
+    "avg_ms": 2380,
+    "distribution": {
+      "fast": 10
+    }
+  },
+  {
+    "mode": "deep",
+    "P@5": 1.0,
+    "avg_ms": 2206,
+    "distribution": {
+      "deep": 10
+    }
+  },
+  {
+    "mode": "auto",
+    "P@5": 1.0,
+    "avg_ms": 2114,
+    "distribution": {
+      "fast": 10
+    }
+  }
+]

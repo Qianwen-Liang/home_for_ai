@@ -1,0 +1,94 @@
+{
+  "mode": "full",
+  "agg": {
+    "queries": 8,
+    "P@k": 1.0,
+    "Noise@k": 0.0,
+    "MRR": 0.7291,
+    "Hit@k": 0.875,
+    "avg_ms": 3609,
+    "errors": 0
+  },
+  "per_query": [
+    {
+      "id": "T21",
+      "query": "sentence-transformers CrossEncoder rerank python",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 0.333,
+      "ms": 3231,
+      "err": "",
+      "n": 4
+    },
+    {
+      "id": "T22",
+      "query": "sklearn TfidfVectorizer cosine similarity",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 0.5,
+      "ms": 2220,
+      "err": "",
+      "n": 4
+    },
+    {
+      "id": "T23",
+      "query": "Anthropic contextual retrieval cookbook",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 3250,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T24",
+      "query": "duckduckgo html endpoint scraping anomaly",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 3795,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T25",
+      "query": "retrieval augmented generation failure rate",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 3875,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T26",
+      "query": "tool schema token overhead agent",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 4230,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T27",
+      "query": "MCP SEPs registry agent skills",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 1.0,
+      "ms": 2861,
+      "err": "",
+      "n": 5
+    },
+    {
+      "id": "T28",
+      "query": "搜索增强 查询改写 多路召回",
+      "p@k": 1.0,
+      "noise@k": 0.0,
+      "mrr": 0.0,
+      "ms": 5411,
+      "err": "",
+      "n": 5
+    }
+  ]
+}
