@@ -76,9 +76,9 @@ jobs:
           pip install pytest jsonschema hypothesis
 
       - name: 运行测试
-        # 已知失败 2 项（test_debugger 的 auto_fix 网络/认证修复），
-        # 属改动前既有问题，与门禁改造无关；此处显式 deselect 并在
-        # 下一条 step 汇报，避免"静默跳过"。
+        # 已知失败登记在 eval/governance/known_test_failures.json（F1/F2，状态 accepted）。
+        # 此处 deselect 与登记表一一对应；门禁 G3 每次运行都会显示该表，
+        # 确保"接受的失败"是被摆出来的，而不是被藏起来的。
         run: |
           python -m pytest tests/ -q \
             --deselect tests/test_debugger.py::test_auto_fix_network \
@@ -87,4 +87,4 @@ jobs:
       - name: 已知失败项提醒
         if: always()
         run: |
-          echo "::warning title=已知失败::test_debugger.py 的 test_auto_fix_network / test_auto_fix_auth 为本轮改造前既有失败，已在本 CI 中显式 deselect，待单独修复。"
+          echo "::warning title=已知失败::F1/F2 (test_debugger.py) 状态=accepted，详见 eval/governance/known_test_failures.json。出口条件：补齐网络/认证故障的自动修复规则并改用确定性样本断言。"

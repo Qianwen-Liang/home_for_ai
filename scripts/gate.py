@@ -196,7 +196,34 @@ def _probe_k4() -> tuple[bool, str]:
     return True, f"{len(with_ann)}/{len(tools)} 提供 annotations"
 
 
+KNOWN_FAILURES = GOV_DIR / "known_test_failures.json"
+
 PROBES = {"K1": _probe_k1, "K2": _probe_k2, "K3": _probe_k3, "K4": _probe_k4}
+
+
+def _summarize_known_failures() -> str:
+    """读取并概述已知测试失败登记表（不阻断，但每次门禁都显示）。
+
+    设计意图：允许"接受失败"，但不允许"隐藏失败"。
+    CI 里用 pytest --deselect 排除的用例必须在本表登记，否则就是后门。
+    """
+    if not KNOWN_FAILURES.is_file():
+        return ""
+    try:
+        data = json.loads(KNOWN_FAILURES.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return "已知失败登记表解析失败"
+    items = data.get("known_failures", [])
+    if not items:
+        return ""
+    accepted = [i for i in items if i.get("status") == "accepted"]
+    open_items = [i for i in items if i.get("status") == "open"]
+    parts = []
+    if accepted:
+        parts.append(f"已接受失败 {len(accepted)} 项（{', '.join(i['id'] for i in accepted)}）")
+    if open_items:
+        parts.append(f"待修失败 {len(open_items)} 项（{', '.join(i['id'] for i in open_items)}）")
+    return " | ".join(parts)
 
 
 def check_g3() -> dict:
@@ -244,9 +271,13 @@ def check_g3() -> dict:
         parts.append(f"已接受风险 {len(accepted)} 项: " + "; ".join(accepted))
     if closed_ok:
         parts.append(f"已验证关闭: {', '.join(closed_ok)}")
+    known_fail = _summarize_known_failures()
+    if known_fail:
+        parts.append(known_fail)
     return _result("G3", "契约漂移", passed, " | ".join(parts) or "无 known_issue",
                    {"open": len(open_fail), "closed_fail": len(closed_fail),
-                    "unmarked_fixed": len(open_ok), "accepted": len(accepted)})
+                    "unmarked_fixed": len(open_ok), "accepted": len(accepted),
+                    "known_failures": known_fail})
 
 
 # ══════════════════════════════════════════════════════════
