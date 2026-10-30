@@ -6,8 +6,18 @@ from pathlib import Path
 from typing import Any
 
 
-WORKSPACE_ROOT = Path(__file__).resolve().parent.parent.parent
-ALLOWED_TOP_LEVEL = {"agent-sandbox", "supervision"}
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+WORKSPACE_ROOT = PROJECT_ROOT.parent
+
+# ★可移植性修复（T2798）：原实现把允许访问的顶层目录硬编码为
+# {"agent-sandbox", "supervision"}，导致项目一旦被检出到其他名字的目录
+# （CI 的 /home/runner/work/...、任何 fork、任何子目录）就**所有 read_file 全部被拒**。
+# 现改为基于项目根动态推导：项目根自身（无论叫什么名字）+ 同级 supervision（若存在）。
+PROJECT_DIR_NAME = PROJECT_ROOT.name
+ALLOWED_TOP_LEVEL = {PROJECT_DIR_NAME}
+if (WORKSPACE_ROOT / "supervision").is_dir():
+    ALLOWED_TOP_LEVEL.add("supervision")
+ALLOWED_TOP_LEVEL = frozenset(ALLOWED_TOP_LEVEL)
 from tools.budget import HARD_FILE_LIMIT as MAX_FILE_BYTES  # 步骤4.3 统一阈值来源
 from tools.budget import FULL_TEXT_LIMIT  # noqa: F401  (供本模块使用)
 
@@ -91,8 +101,8 @@ def _resolve_path(requested_path: str) -> Path:
     if not raw_path.is_absolute():
         first_part = raw_path.parts[0] if raw_path.parts else ""
         if first_part not in ALLOWED_TOP_LEVEL:
-            # 尝试自动添加 agent-sandbox 前缀（run_command 基准）
-            auto_prefixed = Path("agent-sandbox") / raw_path
+            # 尝试自动添加项目根目录名前缀（run_command 基准）
+            auto_prefixed = Path(PROJECT_DIR_NAME) / raw_path
             candidate = WORKSPACE_ROOT / auto_prefixed
             try:
                 resolved = candidate.resolve(strict=True)
@@ -116,7 +126,9 @@ def _resolve_path(requested_path: str) -> Path:
         raise ReadToolError("拒绝访问工作区之外的路径") from exc
 
     if relative.parts and relative.parts[0] not in ALLOWED_TOP_LEVEL:
-        raise ReadToolError("只允许访问 supervision 和 agent-sandbox")
+        raise ReadToolError(
+            f"只允许访问 {sorted(ALLOWED_TOP_LEVEL)} 中的路径（当前为 {relative.parts[0]!r}）"
+        )
     if _is_protected(resolved):
         raise ReadToolError("该文件包含受保护的环境变量，禁止读取")
     return resolved
