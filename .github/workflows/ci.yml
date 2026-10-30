@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   gate:
-    name: 治理门禁 G1-G4
+    name: 治理门禁 G1-G5
     runs-on: ubuntu-latest
     timeout-minutes: 20
 

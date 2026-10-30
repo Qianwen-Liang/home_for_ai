@@ -4793,5 +4793,30 @@
       "boundary",
       "method"
     ]
+  },
+  "K1793376293": {
+    "id": "K1793376293",
+    "title": "G5 测试完整性门禁：用硬断言消除\"假绿\"CI",
+    "content": "【T2798 P0-② 交付实录】scripts/test_audit.py + gate.py G5\n\n【要解决的问题：假绿】\nCI 首次全绿时，results job 只用 **18 秒** 跑完 602 个用例（本地需 70 秒）。\n快得不合理有两种解释：Linux 确实快 7-10x，或者测试根本没执行。\n\"因为没跑所以通过\"的 CI 比没有 CI 更糟——它给出虚假安全感，与 K1/K2 悬空三个月同源。\n\n【无法取证 → 转为硬断言】\n尝试取证全部失败：Actions 日志端点需认证（403）、check-runs output 为空、job timing 只能看出总时长。\n于是改为不依赖日志的确定性验证：既然看不见它跑没跑，那就断言\"跑够了才算通过\"。\n\n【G5 断言（scripts/test_audit.py）】\n- collected >= 550（基线 602）——防 conftest 报错/配置错误导致测试静默消失\n- passed    >= 540——防大范围 skip 伪装成通过\n- skipped   <= 15 ——防 skip 泛滥\n- failed    == 0  ——失败必须为零（已登记除外）\nquick 模式只查收集数（2s），full 模式跑全量并解析统计（70s）。\n\n【关键设计：单一事实来源】\ntest_audit.py 的 --deselect 列表**从 eval/governance/known_test_failures.json 读取**，\n不在脚本里硬编码。这样\"CI 排除的用例\"与\"正式登记的用例\"永远不会漂移——\n否则又是一处会腐化的双份真相。\n\n【验证结果】\n- 本地：22 个用例审计通过，G5 收集 602 个（阈值 550），gate 5/5 绿（29.1s）\n- CI：e7ca2df runs 全绿，tests job 22s（较之前 18s 增加 4s，正是审计开销），\n  step \"运行测试（带完整性审计）\" success → 断言确实执行\n→ 反证了之前 18s 不是假绿：Linux 上 602 个用例确实能在 ~15s 内跑完\n\n【方法论】\n当无法观测某个行为是否发生时，不要停下来说\"无法验证\"，\n而要设计一个**只有行为真的发生才能通过的断言**。可观测性不足时，用约束替代观测。",
+    "category": "experience",
+    "tags": [
+      "假绿",
+      "CI",
+      "测试审计",
+      "G5",
+      "断言",
+      "单一事实来源",
+      "可观测性不足"
+    ],
+    "source": "",
+    "created_at": 1793376293.9675534,
+    "updated_at": 1793376293.9675534,
+    "version": 1,
+    "kind": "procedural",
+    "semantic_tags": [
+      "method",
+      "governance",
+      "benchmark"
+    ]
   }
 }
