@@ -133,9 +133,15 @@ def _isolated_knowledge_writes(monkeypatch, tmp_path):
         import tools.monitor as _mon
     except ImportError:
         _mon = None
-    if _mon is not None and hasattr(_mon, "_monitor"):
+    if _mon is not None:
+        # 两处都要隔离：
+        #   ① 模块级单例（execute_monitor_tool 走这条）
+        #   ② 模块常量 MONITOR_DATA_FILE（任何 Monitor() 新建实例的默认路径）
+        # 只做①的话，测试里直接 Monitor() 仍会读写生产文件——
+        # 2026-10-31 就是这样丢掉了 1,832 次调用统计。
         monkeypatch.setattr(
             _mon, "_monitor", _mon.Monitor(path=tmp_path / "conftest_monitor.json")
         )
+        monkeypatch.setattr(_mon, "MONITOR_DATA_FILE", tmp_path / "conftest_monitor_default.json")
 
     return isolated

@@ -44,6 +44,37 @@ PROTECTED = [
 PERF_THRESHOLD = 0.20          # p50 退化超过 20% 即红
 PERF_REPEAT = 5
 
+# G1 默认要跑的测试：凡是引用了「会写持久化状态」模块的测试文件。
+# 原实现写死 3 个文件，漏掉了 test_monitor.py——而正是它把
+# memory/monitor_data.json 清空，丢失了 1,832 次调用统计（2026-10-31）。
+ISOLATION_MARKERS = (
+    "tools.monitor",
+    "tools.knowledge_store",
+    "tools.task_tracker",
+    "tools.offline_runner",
+    "tools.workflow_engine",
+    "tools.checkpoint",
+)
+# 自检套件自身会驱动门禁逻辑，纳入会显著拖慢 G1 且它不写持久化数据
+ISOLATION_EXCLUDE = {"tests/test_gate_selftest.py"}
+
+
+def _isolation_targets() -> list[str]:
+    """自动发现可能写生产数据的测试文件（避免手工清单漏项）。"""
+    targets: list[str] = []
+    tests_dir = ROOT / "tests"
+    for path in sorted(tests_dir.rglob("test_*.py")):
+        rel = str(path.relative_to(ROOT)).replace("\\", "/")
+        if rel in ISOLATION_EXCLUDE:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if any(marker in text for marker in ISOLATION_MARKERS):
+            targets.append(rel)
+    return targets
+
 
 # ══════════════════════════════════════════════════════════
 # 工具函数
@@ -124,8 +155,7 @@ def check_g1(full: bool = False) -> dict:
         pass
 
     before = _fingerprint(PROTECTED)
-    targets = ["tests/"] if full else ["tests/test_stress.py", "tests/test_e2e_integration.py",
-                                       "tests/test_experience_learner.py"]
+    targets = ["tests/"] if full else _isolation_targets()
     t0 = time.perf_counter()
     proc = subprocess.run(
         [sys.executable, "-m", "pytest", *targets, "-q", "--no-header", "-p", "no:cacheprovider"],

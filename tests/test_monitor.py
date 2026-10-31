@@ -4,6 +4,7 @@ monitor 单元测试
 """
 import sys
 import os
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -18,8 +19,16 @@ from tools.monitor import (
 # ── 辅助：每个测试前后重置监控状态 ────────────────────────
 
 def _fresh_monitor() -> Monitor:
-    """创建干净监控实例。"""
-    monitor = Monitor()
+    """创建干净监控实例。
+
+    ★必须使用临时路径。原实现用 Monitor()（默认=生产文件 memory/monitor_data.json），
+    test_reset 调用 reset() 时会把生产数据写空——2026-10-31 实测因此丢失了
+    1,832 次调用、约 1.5 个月的运行统计。
+    """
+    import tempfile
+
+    path = Path(tempfile.mkdtemp(prefix="mon_test_")) / "monitor.json"
+    monitor = Monitor(path=path)
     monitor._data = monitor._fresh_data()
     return monitor
 
