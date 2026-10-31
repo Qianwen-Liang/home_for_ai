@@ -1,0 +1,6 @@
+# Git hook 脚本必须以 LF 存储并检出为 LF，
+# 否则 Windows 下的 sh 会因为 CRLF 报 "bad interpreter"。
+.githooks/** text eol=lf
+
+# 其余文件保持自动换行处理（与原仓库行为一致）
+* text=auto

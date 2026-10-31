@@ -1,0 +1,43 @@
+#!/bin/sh
+# pre-push：推送前的完整门禁（约 30 秒，含 G1 数据隔离）
+#
+# 与远端 CI 跑的是同一个 scripts/gate.py，标准完全一致——
+# 本地过了，远端基本不会红，避免"推上去才发现失败"的往返。
+#
+# 缓存机制：若 HEAD 未变且 10 分钟内已通过，直接放行。
+# 原因是网络不稳时 git push 会重试，不应每次都重跑 30 秒门禁。
+
+set -e
+
+PY=python
+if ! command -v "$PY" >/dev/null 2>&1; then
+    PY=python3
+fi
+
+SHA=$(git rev-parse HEAD)
+STAMP=".git/gate_last_pass"
+NOW=$(date +%s)
+
+if [ -f "$STAMP" ]; then
+    LAST_SHA=$(cut -d' ' -f1 "$STAMP" 2>/dev/null || echo "")
+    LAST_TIME=$(cut -d' ' -f2 "$STAMP" 2>/dev/null || echo "0")
+    case "$LAST_TIME" in
+        ''|*[!0-9]*) LAST_TIME=0 ;;
+    esac
+    AGE=$((NOW - LAST_TIME))
+    if [ "$LAST_SHA" = "$SHA" ] && [ "$AGE" -lt 600 ]; then
+        echo "[pre-push] HEAD 未变且 ${AGE}s 前已通过，跳过重复门禁"
+        exit 0
+    fi
+fi
+
+echo "[pre-push] 完整门禁 G1-G5（含数据隔离，约 30s）..."
+if ! "$PY" scripts/gate.py; then
+    echo ""
+    echo "❌ 门禁未通过，推送已阻止。"
+    echo "   修复后重试；确需跳过用：git push --no-verify"
+    exit 1
+fi
+
+echo "$SHA $NOW" > "$STAMP"
+echo "[pre-push] ✅ 通过"

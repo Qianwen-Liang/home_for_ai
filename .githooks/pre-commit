@@ -1,0 +1,30 @@
+#!/bin/sh
+# pre-commit：提交前的快速门禁（约 6 秒）
+#
+# 为什么是这四道：
+#   G4 性能回归    —— 秒级，防止误提交慢查询
+#   G5 测试完整性  —— 2 秒，防止测试配置被改坏而没人发现
+#   G2 确定性      —— 1 秒，ID 唯一 / 并发 / 幂等 / 失败可判定
+#   G3 契约漂移    —— 0.2 秒，防止已知缺陷被偷偷标成已修复
+#
+# 刻意跳过 G1（数据隔离）：它要跑约 25 秒的 pytest，提交动作太频繁不适合。
+# G1 放在 pre-push，那里推送次数少、可以慢。
+#
+# 跳过方式：git commit --no-verify
+# （git 内建，会跳过本 hook。不推荐，但保留紧急出口。）
+
+set -e
+
+PY=python
+if ! command -v "$PY" >/dev/null 2>&1; then
+    PY=python3
+fi
+
+echo "[pre-commit] 快速门禁 G4/G5/G2/G3 ..."
+if ! "$PY" scripts/gate.py --only G4,G5,G2,G3; then
+    echo ""
+    echo "❌ 门禁未通过，提交已阻止。"
+    echo "   修复后重试；确需跳过用：git commit --no-verify"
+    exit 1
+fi
+echo "[pre-commit] ✅ 通过"
