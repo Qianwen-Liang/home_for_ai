@@ -4818,5 +4818,29 @@
       "governance",
       "benchmark"
     ]
+  },
+  "K1793417450": {
+    "id": "K1793417450",
+    "title": "五维升级规划书：把形容词目标翻译成 R/P/E/S/T 断言",
+    "content": "【T2800 五维升级规划书】docs/governance/FIVE_AXES_ROADMAP.md\n\n【核心设计：拒绝形容词】\n\"高鲁棒性/高性能/高效率/高标准化/高度结构化\"是不可验收的形容词目标。\n本项目历史上多次因此产出一次性脚本（80+ 个 _verify_*.py），缺陷反复复发。\n规划书的硬约束：每个\"高\"必须落到可执行断言，每条断言必须能回答\"违反时哪个命令会变红\"。\n\n【五维断言清单（编号可用于门禁映射）】\n① 鲁棒性 R1-R5：R1 边界零未包装异常[C4]、R2 失败必带标记[G2]、R3 并发不丢数据[G2]、\n   R4 多智能体失败回滚无脏状态[待建]、R5 checkpoint 崩溃恢复[待建]\n② 性能 P1-P4：P1 knowledge p50<0.15s[G4]、P2 monitor 记 p50/p95[待建]、\n   P3 run_command p95<60s[待建]、P4 safe_deploy<10s[待建]\n③ 效率 E1-E3：E1 schema≤3500 token[已有]、E2 单任务调用数中位数[待建]、E3 超预算必裁剪[budget]\n④ 标准化 S1-S5：S1 16 工具过 C1-C6[已有]、S2 三层错误契约[已有]、\n   S3 每模块有 TOOL_DEFINITION 或标注非工具[待建]、S4 新增工具三件套[待建]、S5 幽灵条目清零[待建]\n⑤ 结构化 T1-T4：T1 二态无 unresolved[待建]、T2 依赖无环[待建]、\n   T3 单向 core→tools→evolver[待建]、T4 单文件≤1500行[待建]\n\n【实测基线（规划依据，非拍脑袋）】\n70 py 文件 / 37,329 行；45 tools 模块；16 注册 + 26 legacy（24 internal_subsystem）；\n616 测试用例；5 道门禁 + 14 双向自检；门禁 31s；\nmonitor 1310 调用 / 0.5% 错误 / 均值 3495.6ms（**无分位数，长尾被掩盖**）；\n3 个文件逼近 1500 行（specialist_base 1491 / repair_executors 1411 / knowledge_store 1391）。\n\n【最大鲁棒性盲区】契约只覆盖\"工具级\"，orchestrator/village/task_dispatcher 等**协同级**组件零契约守护。\n\n【失败判据（预注册，防事后合理化）】\n① 新增检查 7 日内降级为 accepted 且无出口条件\n② 门禁自检用例被删（失去\"能否抓贼\"的验证）\n③ 治理连续两周 >30% 精力且主线无推进\n④ 阈值来自拍脑袋而非实测\n⑤ 新遗留项超 1 月未处理\n止损：连续 2 阶段不通过 → 暂停治理，全面回主线。\n\n【配额硬约束】治理 ≤30%，业务主线（T2738/T2769）≥70%。\n理由：本项目有过\"一直在治理、始终不产出\"的倾向，而 80+ 个一次性脚本每一个都看起来像在做正事。",
+    "category": "experience",
+    "tags": [
+      "五维",
+      "规划书",
+      "断言驱动",
+      "失败判据",
+      "治理配额",
+      "反形容词"
+    ],
+    "source": "",
+    "created_at": 1793417450.4298527,
+    "updated_at": 1793417450.4298527,
+    "version": 1,
+    "kind": "procedural",
+    "semantic_tags": [
+      "method",
+      "governance",
+      "benchmark"
+    ]
   }
 }
