@@ -67,17 +67,9 @@ class HealthCheck:
         """执行全面健康检查。"""
         self.results = []
 
-        # 1. 检查工具模块（仅检查实际存在的模块）
-        self._check_tools_module("runner", "run_command")
-        self._check_tools_module("calculator", "calculate")
-        self._check_tools_module("file_utils", "file_utils")
-        self._check_tools_module("knowledge_store", "knowledge")
-        self._check_tools_module("task_tracker", "task_tracker")
-        self._check_tools_module("self_check", "self_check")
-        self._check_tools_module("test_runner", "test_runner")
-        self._check_tools_module("monitor", "monitor")
-        self._check_tools_module("decision_engine", "decision_engine")
-        self._check_tools_module("safety_net", "safety_net")
+        # 1. 检查工具模块（★T2824：自动发现全部 tools/ 模块）
+        for module_name in self._discover_modules():
+            self._check_tools_module(module_name, None)
 
         # 2. 检查配置文件
         self._check_config()
@@ -91,19 +83,31 @@ class HealthCheck:
         return self._generate_report(verbose)
 
     def check_tools(self, verbose: bool = False) -> str:
-        """仅检查工具模块。"""
+        """检查全部 tools/ 模块（★T2824：自动发现，不再硬编码清单）。
+
+        原实现硬编码 10 个模块名，而 tools/ 下有 43 个——覆盖率仅 23%，
+        报告却显示「🟢 优」。新增模块永远不会被自检，等于自检慢慢失真。
+        改为自动发现：新增模块自动纳入，无需维护清单。
+        """
         self.results = []
-        self._check_tools_module("runner", "run_command")
-        self._check_tools_module("calculator", "calculate")
-        self._check_tools_module("file_utils", "file_utils")
-        self._check_tools_module("knowledge_store", "knowledge")
-        self._check_tools_module("task_tracker", "task_tracker")
-        self._check_tools_module("self_check", "self_check")
-        self._check_tools_module("test_runner", "test_runner")
-        self._check_tools_module("monitor", "monitor")
-        self._check_tools_module("decision_engine", "decision_engine")
-        self._check_tools_module("safety_net", "safety_net")
+        for module_name in self._discover_modules():
+            self._check_tools_module(module_name, None)
         return self._generate_report(verbose)
+
+    @staticmethod
+    def _discover_modules() -> list[str]:
+        """发现 tools/ 下所有模块（排除 __init__）。
+
+        外部依据：go-sundheit 的健康检查设计是「注册式/自动发现」而非静态清单，
+        理由一致——手工清单必然滞后于代码增长。
+        """
+        tools_dir = SANDBOX_DIR / "tools"
+        if not tools_dir.is_dir():
+            return []
+        return sorted(
+            p.stem for p in tools_dir.glob("*.py")
+            if p.stem != "__init__" and not p.stem.startswith(".")
+        )
 
     def check_config(self, verbose: bool = False) -> str:
         """检查配置文件。"""
@@ -117,11 +121,17 @@ class HealthCheck:
         self._check_memory()
         return self._generate_report(verbose)
 
-    def _check_tools_module(self, module_name: str, tool_name: str | None) -> None:
-        """检查一个工具模块。"""
+    def _check_tools_module(self, module_name: str, tool_name: str | None = None) -> None:
+        """检查一个 tools/ 模块。
+
+        ★T2824：区分两类模块，避免把「基础设施没有 TOOL_DEFINITION」误报为警告。
+          - 工具实现：应有 TOOL_DEFINITION + 执行函数
+          - 基础设施（errors/budget/registry/middleware 等）：只需能导入
+        """
         try:
             module = importlib.import_module(f"tools.{module_name}")
 
+            resolved_tool = tool_name
             # 检查 TOOL_DEFINITION
             if hasattr(module, "TOOL_DEFINITION"):
                 td = module.TOOL_DEFINITION
@@ -129,6 +139,7 @@ class HealthCheck:
                 assert "function" in td, "TOOL_DEFINITION 缺少 function"
                 assert "name" in td["function"], "TOOL_DEFINITION.function 缺少 name"
                 actual_name = td["function"]["name"]
+                resolved_tool = resolved_tool or actual_name
                 self.results.append({
                     "type": "tool",
                     "name": module_name,
@@ -139,14 +150,14 @@ class HealthCheck:
                 self.results.append({
                     "type": "tool",
                     "name": module_name,
-                    "status": "⚠️",
-                    "detail": "缺少 TOOL_DEFINITION",
+                    "status": "✅",
+                    "detail": "非工具模块（可导入）",
                 })
+                resolved_tool = None
 
-            # 检查 execute_* 函数
-            if tool_name:
-                func_name = f"execute_{tool_name}_tool"
-                # 也尝试直接函数名
+            # 检查 execute_* 函数（仅对有 TOOL_DEFINITION 的模块）
+            if resolved_tool:
+                func_name = f"execute_{resolved_tool}_tool"
                 if hasattr(module, func_name):
                     self.results.append({
                         "type": "tool",
@@ -154,19 +165,19 @@ class HealthCheck:
                         "status": "✅",
                         "detail": f"函数 {func_name} 存在",
                     })
-                elif tool_name and hasattr(module, tool_name):
+                elif hasattr(module, resolved_tool):
                     self.results.append({
                         "type": "tool",
                         "name": module_name,
                         "status": "✅",
-                        "detail": f"函数 {tool_name} 存在",
+                        "detail": f"函数 {resolved_tool} 存在",
                     })
                 else:
                     self.results.append({
                         "type": "tool",
                         "name": module_name,
                         "status": "⚠️",
-                        "detail": f"未找到执行函数",
+                        "detail": f"有 TOOL_DEFINITION 但未找到执行函数 {func_name}",
                     })
 
         except ImportError as exc:
@@ -324,8 +335,20 @@ class HealthCheck:
             f"健康状态: {health}",
             f"{'='*50}",
             f"总检查项: {total} | ✅ 通过: {passed} | ⚠️ 警告: {warnings} | ❌ 失败: {failed}",
-            "",
         ]
+
+        # ★T2824：显式披露模块覆盖率。
+        # 旧版报「20 项全通过 / 🟢 优」，实际只检查了 10/43 个模块（23%），
+        # 健康度是用未覆盖的样本算出来的。现在把覆盖率摆到报告里，
+        # 避免「项数多」被误读为「覆盖全」。
+        tool_names = {r["name"] for r in self.results if r["type"] == "tool"}
+        if tool_names:
+            discovered = self._discover_modules()
+            covered = len(tool_names & set(discovered))
+            pct = (covered / len(discovered) * 100) if discovered else 0.0
+            lines.append(f"模块覆盖: {covered}/{len(discovered)}（{pct:.0f}%）")
+
+        lines.append("")
 
         # 按类型分组显示
         categories = {"tool": "🔧 工具模块", "config": "📄 配置文件", "directory": "📁 目录结构", "memory": "🧠 记忆系统"}
