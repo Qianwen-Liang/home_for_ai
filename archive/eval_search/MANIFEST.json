@@ -1,0 +1,32 @@
+{
+  "_doc": "eval/search 下的一次性排查脚本（搜索能力重构时期）。保留仅为追溯。",
+  "archived_at": "2026-10-30",
+  "count": 17,
+  "kept_in_place": [
+    "runner.py",
+    "eval_federated.py",
+    "merge_results.py",
+    "test_dual_mode.py",
+    "queries.json",
+    "baseline_bing.json"
+  ],
+  "files": [
+    "_check_github.py",
+    "_debug_fail.py",
+    "_diag2.py",
+    "_diag3.py",
+    "_diag_regress.py",
+    "_final_check.py",
+    "_fix_timeout.py",
+    "_probe_authority.py",
+    "_probe_breakthrough.py",
+    "_probe_ddg.py",
+    "_probe_final.py",
+    "_probe_market.py",
+    "_probe_strategy.py",
+    "_source_latency.py",
+    "_test_fed.py",
+    "_verify_fast.py",
+    "_verify_fix.py"
+  ]
+}

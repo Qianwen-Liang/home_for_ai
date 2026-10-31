@@ -77,6 +77,35 @@ def _parse_counts(output: str) -> dict[str, int]:
     return counts
 
 
+def _judge(counts: dict[str, int], quick: bool) -> list[str]:
+    """判定统计是否满足完整性要求，返回问题列表（空 = 通过）。
+
+    抽成纯函数以便自检套件直接验证判定逻辑（该红时必红），
+    无需真的让测试消失。
+    """
+    problems: list[str] = []
+    if quick:
+        collected = counts.get("collected", 0)
+        if collected < MIN_COLLECTED:
+            problems.append(f"收集数过低: {collected} < {MIN_COLLECTED}（测试可能未被收集）")
+        return problems
+
+    passed = counts.get("passed", 0)
+    failed = counts.get("failed", 0) + counts.get("error", 0)
+    skipped = counts.get("skipped", 0)
+
+    if passed < MIN_PASSED:
+        problems.append(f"通过数过低: {passed} < {MIN_PASSED}（疑似测试未真正执行）")
+    if failed > MAX_FAILED:
+        problems.append(f"失败数超限: {failed} > {MAX_FAILED}")
+    total_seen = passed + failed + skipped
+    if total_seen < MIN_COLLECTED:
+        problems.append(f"执行用例总数过低: {total_seen} < {MIN_COLLECTED}")
+    if skipped > MAX_SKIPPED:
+        problems.append(f"跳过数过多: {skipped} > {MAX_SKIPPED}（疑似大范围 skip 伪装通过）")
+    return problems
+
+
 def main() -> int:
     argv = sys.argv[1:]
     quick = "--quick" in argv
@@ -102,27 +131,7 @@ def main() -> int:
         print(f"审计执行异常: {type(exc).__name__}: {exc}")
         return 2
 
-    problems: list[str] = []
-
-    if not quick:
-        passed = counts.get("passed", 0)
-        failed = counts.get("failed", 0) + counts.get("error", 0)
-        skipped = counts.get("skipped", 0)
-
-        if passed < MIN_PASSED:
-            problems.append(f"通过数过低: {passed} < {MIN_PASSED}（疑似测试未真正执行）")
-        if failed > MAX_FAILED:
-            problems.append(f"失败数超限: {failed} > {MAX_FAILED}")
-        # 收集数在 -q 模式下不一定出现，以 collected/总数推断
-        total_seen = passed + failed + skipped
-        if total_seen < MIN_COLLECTED:
-            problems.append(f"执行用例总数过低: {total_seen} < {MIN_COLLECTED}")
-        if skipped > MAX_SKIPPED:
-            problems.append(f"跳过数过多: {skipped} > {MAX_SKIPPED}（疑似大范围 skip 伪装通过）")
-    else:
-        collected = counts.get("collected", 0)
-        if collected < MIN_COLLECTED:
-            problems.append(f"收集数过低: {collected} < {MIN_COLLECTED}（测试可能未被收集）")
+    problems: list[str] = _judge(counts, quick)
 
     result = {
         "mode": "quick" if quick else "full",
