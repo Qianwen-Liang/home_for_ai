@@ -1339,7 +1339,8 @@ def _auto_switch_to_debugger(
             conversation.add_assistant_message(f"[Debugger] {report}")
         return report
 
-    from tools.specialist_base import DebuggerAgent, TaskInput, SpecialistRegistry
+    from tools.debugger_agent import DebuggerAgent   # ★T2827：直接导入，切断循环
+    from tools.specialist_base import TaskInput, SpecialistRegistry
 
     # 创建 DebuggerAgent 实例，执行本地诊断（不依赖 API）
     debugger = DebuggerAgent()
@@ -1476,7 +1477,8 @@ def handle_command(
         parts = normalized.split(maxsplit=2)
         sub_cmd = parts[1] if len(parts) > 1 else ""
         sub_arg = parts[2] if len(parts) > 2 else ""
-        from tools.specialist_base import DebuggerAgent, TaskInput
+        from tools.debugger_agent import DebuggerAgent   # ★T2827：直接导入，切断循环
+        from tools.specialist_base import TaskInput
         debugger = DebuggerAgent()
         if sub_cmd == "health":
             task = TaskInput(

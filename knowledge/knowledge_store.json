@@ -4942,5 +4942,29 @@
       "lesson",
       "boundary"
     ]
+  },
+  "K1793461584": {
+    "id": "K1793461584",
+    "title": "self_check 自动发现：覆盖率 23%→100%，立刻抓出循环导入",
+    "content": "【T2824 第2梯队第一项：self_check 自动发现】严格三段式执行\n\n【调研发现：覆盖率虚高的典型样本】\nself_check 硬编码 10 个模块名，而 tools/ 实有 42 个 → **覆盖 23%**，\n但报告显示「总检查项 20 | 全通过 | 健康状态 🟢 优」。\n20 项 = 10 模块 × 2（TOOL_DEFINITION 检查 + 执行函数检查）。\n\n**健康度是用 23% 的样本算出来的，却被当成全局结论。**\n这比\"没有自检\"更危险——它给出确定的错误信号。\n\n外部依据：go-sundheit（AppsFlyer）的健康检查采用**注册式**设计，\n而非静态清单，理由正是\"手工清单必然滞后于代码增长\"。\n\n【实现】\n1. `_discover_modules()` 自动扫描 tools/*.py\n2. check_all / check_tools 改为遍历发现结果，删除两处重复的硬编码清单\n3. 区分两类模块：工具实现（应有 TOOL_DEFINITION+执行函数）vs 基础设施（能导入即可）\n   ——原实现把 errors/budget/registry 标为「⚠️ 缺少 TOOL_DEFINITION」，全是噪音\n4. 报告新增「模块覆盖: 42/42（100%）」\n\n【★扩大覆盖面立刻抓到的两个真实缺陷】\ndebugger_agent 从不在旧清单里 → 从未被检查 → 发现：\n① `tools/debugger_agent.py:14` ↔ `tools/specialist_base.py:1491` **循环导入**，\n   debugger_agent 无法独立 import（大概率就是 F1/F2 两个 test_debugger 失败的根源）\n② `role_system` 有 TOOL_DEFINITION 但无 `execute_role_system_tool`，契约不完整\n\n【结果】\n覆盖 10/42 (23%) → 42/42 (100%)\n健康状态 🟢 优（假） → 🔴 差（真，因为确有 1 失败 1 警告）\n测试 685 passed；门禁 5/5；已推送 bd650fc\n\n【方法论】\n**提高观测覆盖率本身就能发现缺陷**——不需要写新逻辑，\n只要把\"看不见的地方\"变成\"看得见\"，问题自己会浮出来。\n这条与\"把 K1/K2 接进 G3 后立刻暴露\"是同一个机制。",
+    "category": "experience",
+    "tags": [
+      "self_check",
+      "自动发现",
+      "覆盖率",
+      "健康检查",
+      "循环导入",
+      "观测覆盖率"
+    ],
+    "source": "",
+    "created_at": 1793461584.988239,
+    "updated_at": 1793461584.988239,
+    "version": 1,
+    "kind": "procedural",
+    "semantic_tags": [
+      "method",
+      "lesson",
+      "governance"
+    ]
   }
 }

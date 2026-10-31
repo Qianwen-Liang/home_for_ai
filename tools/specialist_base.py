@@ -1487,5 +1487,10 @@ def execute_specialist_tool(arguments: dict[str, Any]) -> str:
         return f"Specialist 错误: {exc}"
 
 
-# 在文件末尾导入 DebuggerAgent，此时所有基类已定义完毕
-from .debugger_agent import DebuggerAgent  # noqa: E402
+# ★T2827：此处原有一行 `from .debugger_agent import DebuggerAgent`，
+# 目的是让 `from tools.specialist_base import DebuggerAgent` 可用。
+# 但它与 debugger_agent.py 顶部的 `from .specialist_base import ...` 构成循环，
+# 导致 `import tools.debugger_agent` 直接失败（ImportError: partially initialized）。
+#
+# 实际上本文件第 1189/1241 行已实现**延迟加载**（registry 里 "debugger": None），
+# 模块级导入纯属冗余。现已改为由调用方直接从 tools.debugger_agent 导入。

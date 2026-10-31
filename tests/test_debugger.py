@@ -18,8 +18,8 @@ import shutil
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from tools.debugger_agent import DebuggerAgent   # ★T2827：切断循环后改为直接导入
 from tools.specialist_base import (
-    DebuggerAgent,
     SpecialistRegistry,
     SpecialistError,
     TaskInput,
