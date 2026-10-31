@@ -279,6 +279,47 @@ class TraceMiddleware:
         rows = [{"tool": k, **v} for k, v in s.items()]
         return sorted(rows, key=lambda x: -x["max_chars"])[:top_n]
 
+    def error_coverage(self) -> dict[str, Any]:
+        """错误分类覆盖率（T2822 补）：衡量分类**是否真的有效**，而不只是映射表多大。
+
+        区分两个层次：
+          - 映射表覆盖（errors.coverage_report）：表里登记了多少种异常
+          - **运行时覆盖（本方法）**：真实失败调用中，有多少被细分到了具体类别
+
+        只有后者能反映分类质量。判据：
+          已细分 = 归入 RETRYABLE / REJECTED
+          未细分 = 落在 FATAL 且 error_type 是 RuntimeError
+                   （agent1 用 RuntimeError(result[:120]) 包装所有失败，
+                     这类记录说明文本分类也没能给出更具体的判断）
+        """
+        with self._lock:
+            recs = list(self._records)
+        failed = [r for r in recs if not r.success]
+        total = len(recs)
+        if not failed:
+            return {"total_calls": total, "failed": 0, "refined_ratio": 1.0,
+                    "note": "无失败调用"}
+
+        from collections import Counter
+
+        cats = Counter((r.error_category or "(未分类)") for r in failed)
+        unrefined = [
+            r for r in failed
+            if r.error_category == "FATAL" and r.error_type == "RuntimeError"
+        ]
+        refined = len(failed) - len(unrefined)
+        by_tool = Counter(r.tool for r in unrefined).most_common(5)
+
+        return {
+            "total_calls": total,
+            "failed": len(failed),
+            "categories": dict(cats),
+            "refined": refined,
+            "unrefined": len(unrefined),
+            "refined_ratio": round(refined / len(failed), 3),
+            "unrefined_by_tool": by_tool,
+        }
+
     def silent_failure_tools(self, top_n: int = 10) -> list[dict]:
         s = self.snapshot().get("by_tool", {})
         rows = [{"tool": k, **v} for k, v in s.items() if v["silent"] > 0]
