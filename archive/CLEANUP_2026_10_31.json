@@ -1,0 +1,93 @@
+{
+  "_doc": "第5梯队清噪归档记录（T2823）",
+  "archived_at": "2026-10-31 22:57:37",
+  "evidence": "memory/cmd_output/t2823_research.py（AST + 全仓文本 + 交付物身份 三层验证）",
+  "key_finding": "llm_patcher 的『零依赖』不是因为它没用了，而是因为它有语法错误、根本导入不进来；amone 则不是死代码，是 SAT 主线交付物——三者处置理由各不相同，不能一刀切",
+  "records": [
+    {
+      "from": "evolver/llm_patcher.py",
+      "to": "archive/evolver/llm_patcher.py",
+      "lines": 1543,
+      "reason": "零 AST 引用；且第 931 行 f-string 语法错误导致 Python 3.11 无法导入，功能实际不可用"
+    },
+    {
+      "from": "tools/test_tools.py",
+      "to": "archive/tools/test_tools.py",
+      "lines": 341,
+      "reason": "零 AST 引用；功能与 tools/self_check.py 重叠，已被取代"
+    },
+    {
+      "from": "core/amone.py",
+      "to": "archive/core/amone.py",
+      "lines": 110,
+      "reason": "T2751 交付物（SAT at-most-one 识别）；SAT 主线已止损，随主线归档而非按死代码处理"
+    },
+    {
+      "from": "evolver/.deploy_backups/20260726_015327_agent1.py",
+      "to": "(deleted)",
+      "lines": 1554,
+      "reason": "safe_deploy 的自动备份残留，非源码；清理以恢复准确的模块统计"
+    },
+    {
+      "from": "evolver/.deploy_backups/20260726_015543_agent1.py",
+      "to": "(deleted)",
+      "lines": 1554,
+      "reason": "safe_deploy 的自动备份残留，非源码；清理以恢复准确的模块统计"
+    },
+    {
+      "from": "evolver/.deploy_backups/20260816_185306_auto_repair.py",
+      "to": "(deleted)",
+      "lines": 1269,
+      "reason": "safe_deploy 的自动备份残留，非源码；清理以恢复准确的模块统计"
+    },
+    {
+      "from": "evolver/.deploy_backups/20260816_191109_auto_repair.py",
+      "to": "(deleted)",
+      "lines": 1269,
+      "reason": "safe_deploy 的自动备份残留，非源码；清理以恢复准确的模块统计"
+    },
+    {
+      "from": "evolver/.deploy_backups/20261030_114952_search_router.py",
+      "to": "(deleted)",
+      "lines": 307,
+      "reason": "safe_deploy 的自动备份残留，非源码；清理以恢复准确的模块统计"
+    },
+    {
+      "from": "evolver/.deploy_backups/20261030_114952_search_sources.py",
+      "to": "(deleted)",
+      "lines": 380,
+      "reason": "safe_deploy 的自动备份残留，非源码；清理以恢复准确的模块统计"
+    },
+    {
+      "from": "evolver/.deploy_backups/20261030_114952_web_search.py",
+      "to": "(deleted)",
+      "lines": 402,
+      "reason": "safe_deploy 的自动备份残留，非源码；清理以恢复准确的模块统计"
+    },
+    {
+      "from": "evolver/.deploy_backups/20261030_115143_search_router.py",
+      "to": "(deleted)",
+      "lines": 307,
+      "reason": "safe_deploy 的自动备份残留，非源码；清理以恢复准确的模块统计"
+    },
+    {
+      "from": "evolver/.deploy_backups/20261030_115143_search_sources.py",
+      "to": "(deleted)",
+      "lines": 380,
+      "reason": "safe_deploy 的自动备份残留，非源码；清理以恢复准确的模块统计"
+    },
+    {
+      "from": "evolver/.deploy_backups/20261030_115143_test_evolver_agent.py",
+      "to": "(deleted)",
+      "lines": 249,
+      "reason": "safe_deploy 的自动备份残留，非源码；清理以恢复准确的模块统计"
+    },
+    {
+      "from": "evolver/.deploy_backups/20261030_115143_web_search.py",
+      "to": "(deleted)",
+      "lines": 402,
+      "reason": "safe_deploy 的自动备份残留，非源码；清理以恢复准确的模块统计"
+    }
+  ],
+  "restore_hint": "git log --follow archive/<path> 可找回原路径"
+}
