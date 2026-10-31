@@ -74,6 +74,35 @@ def _result(gate: str, name: str, passed: bool, detail: str, extra: dict | None 
 # G1 数据隔离
 # ══════════════════════════════════════════════════════════
 
+def _compare_fingerprints(before: dict[str, dict], after: dict[str, dict]) -> tuple[list[dict], list[dict]]:
+    """比对前后指纹，返回 (被改写, 被创建)。
+
+    抽成纯函数以便自检套件能直接验证"该红时必红"，而不必真的污染生产数据。
+
+    区分两类变化：
+      drifted —— 已存在的生产文件被改写 → 真实污染
+      created —— 原本缺失的文件被创建   → 干净环境的正常初始化
+    后者在 CI 全新 clone 时必然发生：TaskTracker/KnowledgeStore 在无文件时
+    任何写操作都会创建它，与测试是否"污染"无关。
+    """
+    drifted, created = [], []
+    for rel, b in before.items():
+        a = after.get(rel, {"exists": False})
+        if b.get("sha256") == a.get("sha256"):
+            continue
+        entry = {
+            "path": rel,
+            "before_size": b.get("size"), "after_size": a.get("size"),
+            "before_sha": (b.get("sha256") or "")[:12],
+            "after_sha": (a.get("sha256") or "")[:12],
+        }
+        if b.get("exists"):
+            drifted.append(entry)
+        else:
+            created.append(entry)
+    return drifted, created
+
+
 def check_g1(full: bool = False) -> dict:
     """测试前后生产数据指纹必须完全一致。"""
     import subprocess
@@ -105,26 +134,7 @@ def check_g1(full: bool = False) -> dict:
     elapsed = time.perf_counter() - t0
     after = _fingerprint(PROTECTED)
 
-    drifted, created = [], []
-    for rel in PROTECTED:
-        b, a = before[rel], after[rel]
-        if b.get("sha256") == a.get("sha256"):
-            continue
-        entry = {
-            "path": rel,
-            "before_size": b.get("size"), "after_size": a.get("size"),
-            "before_sha": (b.get("sha256") or "")[:12],
-            "after_sha": (a.get("sha256") or "")[:12],
-        }
-        # 区分两类变化：
-        #   改写已存在的生产文件 → 真实污染（fail）
-        #   创建原本缺失的文件   → 干净环境的正常初始化（不 fail，仅提示）
-        # 后者在 CI 全新 clone 时必然发生：TaskTracker/KnowledgeStore 在无文件时
-        # 任何写操作都会创建它，与测试是否"污染"无关。
-        if b.get("exists"):
-            drifted.append(entry)
-        else:
-            created.append(entry)
+    drifted, created = _compare_fingerprints(before, after)
 
     passed = not drifted and proc.returncode == 0
     if drifted:
