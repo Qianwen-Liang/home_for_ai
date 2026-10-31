@@ -4842,5 +4842,30 @@
       "governance",
       "benchmark"
     ]
+  },
+  "K1793419048": {
+    "id": "K1793419048",
+    "title": "B0 调研：DDSketch 胜出，线性桶在跨数量级数据上误差 722%",
+    "content": "【T2818 B0 调研】报告：docs/governance/B0_QUANTILE_RESEARCH.md\n\n【要解决的问题】monitor 只存 calls/total/max/min，均值 7054ms 被 run_command 最长 120375ms 的长尾污染，无法算分位数。\n\n【候选算法（一手来源）】\n- t-digest（Dunning）：1维k-means变体，极端分位数 ppm 级，~140ns/add，参考实现<1000行\n- HDR Histogram：可配置范围+有效数字，3位→误差≤0.1%，固定空间，记录3-6ns\n- DDSketch（DataDog）：**相对误差保证**（1% 时期望100→结果必在[99,101]），fully mergeable\n- P²（Jain&Chlamtac, CACM 1985）：仅5个标记，但单分位数最优、不可合并\n- 线性桶：等宽，本场景完全失效\n\n【本地实证（900 模拟样本，quantile_bench.py）】\n精确值 p50=36.63ms p95=16230.74ms p99=113099.92ms\n| 方案 | p50误差 | p95误差 | p99误差 | 大小 |\n| 线性桶200 | **722.20%** | 1.66% | 0.15% | 663 B |\n| DDSketch 1% | 0.94% | 0.43% | 0.56% | 2835 B |\n| DDSketch 5% | 4.67% | 3.59% | 2.40% | 875 B |\n| HDR 3位 | 1.44% | 5.12% | 3.63% | 2202 B |\n| 全样本 | 精确 | 精确 | 精确 | 6608 B |\n\n【关键发现：线性桶在本项目彻底不可用】\n数据跨 5 个数量级（2ms→120000ms），桶宽=max/200=600ms，而 p50 仅 36.63ms → 所有快命令落入第一个桶，误差 722%。\n教训：run_command 延迟是极端长尾分布，**任何等宽分桶都不可用**，必须用对数/相对误差分桶。\n\n【选型：DDSketch 风格相对误差桶】\n理由：①精度可证（1%相对误差）②大小与数据范围相关而非样本量（全样本 900→6.6KB、100000→730KB，DDSketch 恒定 2.8KB）③可合并 ④纯 Python ~80行 ⑤零依赖（实测 tdigest/ddsketch/hdrh 均未安装）\n参数：rel_err=0.01，gamma=(1+ε)/(1-ε)=1.0202，每倍频程~49桶，5.8倍频程→~285桶。\n\n【顺带发现的两个衍生问题】\n1. record() 每次全量 _save()：867次调用=867次写盘。应改脏标记+延迟落盘（同 knowledge_store 的 flush_cache 模式），atexit 兜底。\n2. 历史数据只有聚合值，**无法反推分位数**。策略：不迁移不伪造，标注\"分位数自 2026-10-31 起\"。\n\n【能力边界】实证用模拟数据（monitor 未存原始样本）；未实测极端值桶增长；P²/t-digest 未本地实测（已按需求排除）。",
+    "category": "research",
+    "tags": [
+      "分位数",
+      "DDSketch",
+      "t-digest",
+      "HDR",
+      "线性桶失效",
+      "长尾",
+      "monitor"
+    ],
+    "source": "",
+    "created_at": 1793419048.4014807,
+    "updated_at": 1793419048.4014807,
+    "version": 1,
+    "kind": "declarative",
+    "semantic_tags": [
+      "benchmark",
+      "method",
+      "governance"
+    ]
   }
 }
