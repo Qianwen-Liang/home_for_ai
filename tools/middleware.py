@@ -109,7 +109,7 @@ class TraceMiddleware:
 
         if error is not None:
             err_type = type(error).__name__
-            err_cat = self._classify_error(error)
+            err_cat = self._classify_error(error, result)
         else:
             silent = self.detect_silent_failure(tool, result)
 
@@ -147,13 +147,36 @@ class TraceMiddleware:
 
     # ── 错误分类（三层，供步骤 4 复用）──
     @staticmethod
-    def _classify_error(exc: BaseException) -> str:
-        name = type(exc).__name__.lower()
-        if any(k in name for k in ("timeout", "network", "connection", "rate", "limit")):
-            return "RETRYABLE"
-        if any(k in name for k in ("path", "reject", "invalid", "argument", "notfound")):
-            return "REJECTED"
-        return "FATAL"
+    def _classify_error(exc: BaseException, result: str = "") -> str:
+        """错误分类：复用统一契约，避免 middleware 与 errors.py 两套逻辑漂移。
+
+        ★T2822：原实现是自建的 name 关键词匹配，与 tools/errors.py 的
+        ERROR_MAP 各写一份，长期必然不一致。改为优先调用统一契约。
+
+        顺序很重要：
+          1. 先按异常类型分类（真实异常如 OSError 能准确归类）
+          2. 若归为 FATAL 且带返回文本，再用文本细分——
+             因为 agent1 把失败包装成 RuntimeError(result[:120])，
+             RuntimeError 不在 ERROR_MAP 里，按类型只能得到 FATAL，
+             会丢掉「该重试」还是「该改参数」的关键信息。
+        """
+        try:
+            from tools.errors import ErrorCategory, classify, classify_result
+        except ImportError:  # 兜底：契约不可用时不阻塞主流程
+            name = type(exc).__name__.lower()
+            if any(k in name for k in ("timeout", "network", "connection", "rate", "limit")):
+                return "RETRYABLE"
+            if any(k in name for k in ("path", "reject", "invalid", "argument", "notfound")):
+                return "REJECTED"
+            return "FATAL"
+
+        category, _code, _phase = classify(exc)
+        if category != ErrorCategory.FATAL:
+            return category.value
+        if result:
+            text_category, _c, _p = classify_result(result)
+            return text_category.value
+        return category.value
 
     # ── 确定性验证三：静默失败识别 ──
     @staticmethod

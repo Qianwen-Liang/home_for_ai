@@ -111,6 +111,29 @@ ERROR_MAP: dict[str, tuple[ErrorCategory, str, str]] = {
     "RoleSystemError":       (ErrorCategory.FATAL, "role.broken", "execute"),
     "ChatError":             (ErrorCategory.FATAL, "chat.broken", "execute"),
     "BrokenToolError":       (ErrorCategory.FATAL, "tool.broken", "execute"),
+
+    # ── Python 内置异常（★T2822 补全）──────────────────────
+    # 原表 36 种全是项目自定义异常，内置异常只能落到启发式或 FATAL。
+    # 实测 OSError 被判为 FATAL 就是这里缺项——文件/权限类问题
+    # 明明属于「改输入或前置状态」即可修复，却报成需人工介入。
+    "TimeoutError":          (ErrorCategory.RETRYABLE, "builtin.timeout", "execute"),
+    "ConnectionError":       (ErrorCategory.RETRYABLE, "builtin.connection", "execute"),
+    "ConnectionResetError":  (ErrorCategory.RETRYABLE, "builtin.connection.reset", "execute"),
+    "FileNotFoundError":     (ErrorCategory.REJECTED, "builtin.notfound", "validate"),
+    "PermissionError":       (ErrorCategory.REJECTED, "builtin.permission", "validate"),
+    "IsADirectoryError":     (ErrorCategory.REJECTED, "builtin.isdir", "validate"),
+    "NotADirectoryError":    (ErrorCategory.REJECTED, "builtin.notdir", "validate"),
+    "FileExistsError":       (ErrorCategory.REJECTED, "builtin.exists", "validate"),
+    "OSError":               (ErrorCategory.REJECTED, "builtin.os", "execute"),
+    "ValueError":            (ErrorCategory.REJECTED, "builtin.value", "validate"),
+    "UnicodeDecodeError":    (ErrorCategory.REJECTED, "builtin.unicode", "validate"),
+    # 以下属调用方/实现缺陷，需人工修代码
+    "TypeError":             (ErrorCategory.FATAL, "builtin.type", "validate"),
+    "KeyError":              (ErrorCategory.FATAL, "builtin.key", "execute"),
+    "AttributeError":        (ErrorCategory.FATAL, "builtin.attribute", "execute"),
+    "IndexError":            (ErrorCategory.FATAL, "builtin.index", "execute"),
+    "ZeroDivisionError":     (ErrorCategory.FATAL, "builtin.zerodiv", "execute"),
+    "RuntimeError":          (ErrorCategory.FATAL, "builtin.runtime", "execute"),
 }
 
 _DEFAULT = (ErrorCategory.FATAL, "unknown.error", "execute")
@@ -128,6 +151,41 @@ def classify(exc: BaseException) -> tuple[ErrorCategory, str, str]:
     if any(k in low for k in ("path", "reject", "invalid", "argument", "notfound")):
         return ErrorCategory.REJECTED, "heuristic.rejected", "validate"
     return _DEFAULT
+
+
+def classify_result(text: str) -> tuple[ErrorCategory, str, str]:
+    """从工具**返回文本**推断错误类别（T2822 新增）。
+
+    为什么需要它：
+      agent1 把失败的工具返回包装成 `RuntimeError(result[:120])` 交给中间件，
+      而 RuntimeError 不在 ERROR_MAP 中，启发式也匹配不到——于是**所有失败都被
+      归为 FATAL**，"该重试"和"该改参数"的区分完全丢失。
+      本函数直接从返回文本判断，恢复这层语义。
+
+    外部依据：MCP SEP-1303 (Final) 要求工具参数校验失败必须作为
+    Tool Execution Error 返回给模型。类别判断正确，模型才知道该重试还是该改输入。
+
+    注意：只对**已判定失败**的返回调用。像 knowledge 搜索的"未找到结果"
+    是合法空结果而非错误，故 "未找到" 不在 REJECTED 关键词里。
+    """
+    low = (text or "").lower()
+
+    # RETRYABLE：重试同一调用可能成功
+    for kw in ("超时", "timeout", "限流", "rate limit", "rate_limit",
+               "连接失败", "连接被", "connection", "暂时不可用", "temporarily",
+               "网络", "network"):
+        if kw in low:
+            return ErrorCategory.RETRYABLE, "result.retryable", "execute"
+
+    # REJECTED：需先修复输入或前置状态
+    for kw in ("路径不存在", "不存在", "不能为空", "参数", "越界",
+               "拒绝", "rejected", "invalid", "缺少", "不支持", "非法",
+               "未授权", "越权", "格式错误"):
+        if kw in low:
+            return ErrorCategory.REJECTED, "result.rejected", "validate"
+
+    # FATAL：需人工介入
+    return ErrorCategory.FATAL, "result.fatal", "execute"
 
 
 def make_evidence(exc: BaseException, *, phase: str = "", constraint: str = "") -> ErrorEvidence:
