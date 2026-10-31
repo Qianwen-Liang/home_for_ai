@@ -11,20 +11,24 @@
     {
       "id": "F1",
       "test": "tests/test_debugger.py::test_auto_fix_network",
-      "status": "accepted",
+      "status": "closed",
       "reason": "该用例验证 Debugger 对网络类故障的自动修复动作生成。当前 autom_fix 规则库未覆盖网络故障场景，需真实的网络错误样本才能可靠断言。",
       "impact": "仅影响 debugger 的自动修复覆盖面，不影响门禁 G1-G4、契约测试与其余 597 个用例。",
       "exit_condition": "补齐网络故障修复规则并用 mock 网络错误样本做确定性断言后，改为 fixed。",
-      "accepted_at": "2026-10-30"
+      "accepted_at": "2026-10-30",
+      "closed_at": "2026-10-31",
+      "evidence": "根因是测试断言基于旧设计：auto_fix 早已演化为「诊断+路由」，output 不含 fix_actions 字段。实现自洽（fixed=False/routing/message 三者一致），已同步修正 docstring 与测试断言，17 passed。"
     },
     {
       "id": "F2",
       "test": "tests/test_debugger.py::test_auto_fix_auth",
-      "status": "accepted",
+      "status": "closed",
       "reason": "同上，认证类故障的自动修复规则尚未实现，断言缺少可复现的失败输入。",
       "impact": "同上。",
       "exit_condition": "同 F1。",
-      "accepted_at": "2026-10-30"
+      "accepted_at": "2026-10-30",
+      "closed_at": "2026-10-31",
+      "evidence": "根因是测试断言基于旧设计：auto_fix 早已演化为「诊断+路由」，output 不含 fix_actions 字段。实现自洽（fixed=False/routing/message 三者一致），已同步修正 docstring 与测试断言，17 passed。"
     }
   ],
   "ci_note": "CI 中通过 pytest --deselect 排除上述 accepted 用例，并在 workflow 中发出 warning 指向本文件，避免静默跳过。"

@@ -1,7 +1,13 @@
 """
 debugger_agent — Debugger 调试守护者智能体
 ==========================================
-独立模块，继承 SpecialistAgent，提供异常诊断、自动修复、快照和离线扫描。
+独立模块，继承 SpecialistAgent，提供**异常诊断、修复路由、快照和离线扫描**。
+
+★T2827 修订：原文档写「自动修复」，但实现早已演化为「诊断 + 路由」：
+  auto_fix 只做分类与策略匹配，输出 routing 指向真正的执行引擎
+  （确定性修复 → auto_repair，LLM 愈疗 → self_healing），自身不执行修复动作。
+  这是有意的关注点分离——Debugger 负责「判断是什么问题」，
+  引擎负责「怎么修」。文档与测试此前仍按旧设计断言，已同步修正。
 """
 
 from __future__ import annotations

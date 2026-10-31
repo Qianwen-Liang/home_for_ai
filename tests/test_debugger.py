@@ -217,12 +217,15 @@ def test_auto_fix_network():
     output = result.output
     assert output.get("category") == "network", f"修复类别应为 network: {output.get('category')}"
     assert "fixed" in output or "fix_summary" in output, f"应有修复结果"
-    
-    # 检查修复动作列表
-    fix_actions = output.get("fix_actions", [])
-    assert len(fix_actions) > 0, f"应有修复动作"
-    action_names = [a.get("action", "") for a in fix_actions]
-    assert any("重试" in a for a in action_names), f"网络修复应有重试策略: {action_names}"
+
+    # ★T2827：auto_fix 的设计是「诊断 + 路由」，不自行执行修复动作。
+    # 因此断言对象从 fix_actions 改为：策略建议 + 路由目标是否齐备。
+    suggestions = output.get("suggestions", [])
+    routing = output.get("routing", {})
+    assert len(suggestions) > 0, f"网络类问题应给出修复建议: {output}"
+    assert routing, f"应给出修复路由（确定性/LLM 引擎）: {output}"
+    # 网络类应匹配到「重试连接」策略（策略名出现在建议里）
+    assert any("重试" in s for s in suggestions), f"网络修复应有重试策略: {suggestions}"
     
     print("✅ test_auto_fix_network: 通过")
 
@@ -244,9 +247,13 @@ def test_auto_fix_auth():
     output = result.output
     assert output.get("category") == "auth", f"修复类别应为 auth: {output.get('category')}"
     
-    fix_actions = output.get("fix_actions", [])
-    assert len(fix_actions) > 0, f"认证修复应有动作"
-    
+    # ★T2827：同 test_auto_fix_network —— auto_fix 是「诊断 + 路由」，不执行修复。
+    suggestions = output.get("suggestions", [])
+    routing = output.get("routing", {})
+    assert len(suggestions) > 0, f"认证问题应给出修复建议: {output}"
+    assert routing, f"应给出修复路由: {output}"
+    assert any("密钥" in s for s in suggestions), f"认证修复应指向密钥处理: {suggestions}"
+
     print("✅ test_auto_fix_auth: 通过")
 
 
