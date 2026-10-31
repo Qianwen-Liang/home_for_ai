@@ -34,6 +34,61 @@ class TaskTrackerError(RuntimeError):
     """任务追踪器操作错误。"""
 
 
+def _related_boundaries(title: str, description: str = "", limit: int = 2) -> list[str]:
+    """检索与任务标题相关的失效边界卡片。
+
+    设计演进（两次否决）：
+      首版用 2-3 字片段子串匹配 → 假阳性严重：'xyzzynothinghere' 这类无意义
+      标题也能撞上英文片段（the/there），返回完全无关的卡片。
+      提高门槛到"2 个片段命中"仍不够，且反向漏报（'门禁误报观察者效应'
+      明明是已记录的边界，却匹配不到）。
+
+    结论：**降级为复用 knowledge_store.search 的关键词 + kind 过滤**。
+    代价是每次建任务约 0.1s（批量建 100 个任务约 10s，可接受），
+    换来的是不误导——错误的提示比没有提示更糟。
+    """
+    import re
+
+    query = f"{title} {description}".strip()
+    if not query:
+        return []
+    try:
+        from tools.knowledge_store import _store
+        out = _store.search(query, limit, mode="keyword", kind="boundary")
+    except Exception:  # noqa: BLE001  知识库异常不应阻塞建任务
+        return []
+    if not out or "未找到" in out:
+        return []
+
+    # 解析形如：  ⭐⭐⭐ [K1793367001] 标题 (category)
+    # 解析并**按分数过滤**：knowledge_store.search 没有相关性阈值，
+    # 即便查询是无意义词（如 'xyzzynothinghere'）也会返回"最像的"几条。
+    # 实测分数能清楚分离：真正相关 32+，无关 8.5。
+    # 取 15.0 作阈值（实测中点偏保守，宁缺勿滥）。
+    MIN_SCORE = 15.0
+    lines = out.splitlines()
+    results: list[str] = []
+    for i, line in enumerate(lines):
+        m = re.match(r"\s*⭐*\s*\[(K[0-9A-Za-z_]+)\]\s*(.+)", line)
+        if not m:
+            continue
+        name = m.group(2)
+        score = 0.0
+        for follow in lines[i + 1:i + 3]:
+            sm = re.search(r"关键词:\s*([\d.]+)", follow)
+            if sm:
+                score = float(sm.group(1))
+                break
+        if score < MIN_SCORE:
+            continue
+        clean = name.split(" (")[0].strip()[:60]
+        if clean and clean not in results:
+            results.append(clean)
+        if len(results) >= limit:
+            break
+    return results
+
+
 # ── 状态与优先级 ──────────────────────────────────────────
 TASK_STATUS_TODO = "待办"
 TASK_STATUS_IN_PROGRESS = "进行中"
@@ -398,11 +453,21 @@ class TaskTracker:
 
         pi = _PRIORITY_ICON.get(priority, "")
         parent_str = f" | 父任务 [{parent_id}]" if parent_id else ""
-        return (
+        result = (
             f"📋 已创建任务 [{task_id}]: {title}\n"
             f"   层级 L{level} | 优先级 {pi} {priority} | "
             f"重视程度 ⚖️{_fmt_weight(final_weight)}{parent_str}"
         )
+        # ★能力复用：建任务时主动提示相关的失效边界卡片。
+        # 此前该能力只存在于 decision_engine.advise（边界卡片注入），
+        # 而 advise 实际几乎不被调用 —— 知识库成了「只积不用」。
+        # 挂到 create 这个高频入口，让经验在任务开始时就可见。
+        warnings = _related_boundaries(title, description)
+        if warnings:
+            result += "\n\n⚠️ 相关失效边界（来自知识库，建议先读）:\n"
+            for w in warnings:
+                result += f"   • {w}\n"
+        return result
 
     def complete(self, task_id: str) -> str:
         task = self._tasks.get(task_id)

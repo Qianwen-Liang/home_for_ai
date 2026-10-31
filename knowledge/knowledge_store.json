@@ -4893,5 +4893,30 @@
       "lesson",
       "incident"
     ]
+  },
+  "K1793456273": {
+    "id": "K1793456273",
+    "title": "T2769 BYOB 交付：20 实例达成，但随机 SAT 的接受度与验证强度是遗留风险",
+    "content": "【T2769 C1 交付】BYOB 20 个 benchmark 已生成，位置 projects/miplib_solve/byob/（README + manifest + 20 个 CNF，约 620KB）\n\n【规则】20 个新 benchmark，≥10 个「有趣」= MiniSat 1 分钟解不出 且 自己求解器 1 小时解不出。\n\n【方法：选随机 3-SAT 相变区的理由】\n本项目求解器强项（Tseitin 高斯消元 >500x / mdp 零不一致核 / 对称破缺 >900x）**全部依赖结构**。\n随机 3-SAT 在相变点 m/n≈4.26 无可利用结构 → 对我们自己也不易。\n**选它是因为它是我们的盲区，不是强项。**\n\n【实测标定曲线（MiniSat22）】\nn=120:0s / n=180:0.05s / n=240:0.26s / n=270:2.18~9.39s / n=300:29.9s / n=340:51.7s /\n**n=380: >60s TIMEOUT** / n=540: >60s TIMEOUT\n交叉验证 n=380：Glucose4 >43.6s TIMEOUT（现代 CDCL 同样难）\n\n【★重要负结果：规模不是难度唯一决定因素】\nn=400 seed=2769 比 n=380 更大，却被 MiniSat **21.6s 解出（SAT）**。\n原因：相变区 SAT/UNSAT 混合，SAT 远易于 UNSAT，随机结构差异可造成数量级波动。\n**推论：不能用「n≥阈值」推断难度，必须逐个实测。** regular 档（n=400）因此不计入「有趣」配额。\n\n【交付与验证现状（诚实版）】\n生成 20 个：10 interesting(n=540) + 10 regular(n=400)\ninteresting 验证：1 个实测 60s TIMEOUT，9 个实测 20s TIMEOUT（非 60s）\n「自己求解器 1 小时解不出」：**0 个实测**（成本 20 小时），只有 n=380 Glucose>43s 的间接外推\n\n【最大局限（未解决）】\nBYOB 通常期望**结构化** benchmark，纯随机 SAT 可能被评审质疑「缺乏组合结构意义」。\n而项目现有结构族都因我们擅长而不能用（会被自己秒解）。\n**有结构的我们都擅长，我们不擅长的（随机）又可能不被认可——这个矛盾尚未突破。**\n下一步方向 T2820：为 Ramsey/独立集/正则图写生成器（PLAN.md 记录的项目盲区）。\n\n【方法论】交付时把「未验证部分」和「最大局限」写进 README 与 manifest，而不是只报 20 个达标。",
+    "category": "experience",
+    "tags": [
+      "BYOB",
+      "SAT竞赛",
+      "随机3-SAT",
+      "相变区",
+      "难度标定",
+      "负结果",
+      "结构化实例"
+    ],
+    "source": "",
+    "created_at": 1793456273.7642567,
+    "updated_at": 1793456273.7642567,
+    "version": 1,
+    "kind": "procedural",
+    "semantic_tags": [
+      "method",
+      "benchmark",
+      "lesson"
+    ]
   }
 }
