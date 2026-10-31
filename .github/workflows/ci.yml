@@ -10,8 +10,9 @@ name: CI
 #   G4 性能回归 —— 核心路径 p50 退化 > 20% 即红
 
 on:
+  # 所有分支的 push 都触发：feature 分支一推就能看到反馈，
+  # 不必等到创建 PR 才知道红绿。
   push:
-    branches: [main, master]
   pull_request:
   workflow_dispatch:
 
