@@ -244,6 +244,18 @@ def run_command(command: str, timeout: int = 30) -> str:
         if partial_err and partial_err.strip():
             lines.append("── 已产生 STDERR ──")
             lines.append(partial_err.rstrip())
+        # ★B1：超时是长尾主因（120s 长尾占总耗时 98% 量级），
+        # 但它不抛异常，会被上游记成 success=True，在 errors 里永远看不见。
+        # 这里显式登记，让超时成为可观测、可统计的事件。
+        lines.append(
+            "ℹ️ 排查建议：交互式命令（python REPL、more/pause 等）会一直等待输入；"
+            "长任务（全量测试、编译）应显式调大 timeout；网络命令可能卡在连接上。"
+        )
+        try:
+            from tools.monitor import _monitor as _mon
+            _mon.record_timeout("run_command", timeout, command[:100])
+        except Exception:  # noqa: BLE001  监控失败绝不影响命令结果
+            pass
         return "\n".join(lines)
 
     # 正常结束

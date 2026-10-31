@@ -251,7 +251,31 @@ class Monitor:
             "start_time": time.time(),
             "tools": {},
             "recent_errors": [],
+            # ★B1：超时单独统计。超时不会抛异常，因而被记成 success=True，
+            # 在 errors 里永远看不见——这正是 120s 长尾长期隐形的机制。
+            "timeouts": {"total": 0, "recent": []},
         }
+
+    def record_timeout(self, tool_name: str, timeout: int, detail: str = "") -> str:
+        """记录一次命令超时事件（B1 可观测性）。
+
+        独立于 calls/errors 计数：超时是「已执行但未完成」，
+        既不是成功也不是异常失败，混进任何一方都会让指标失真。
+        """
+        bucket = self._data.setdefault("timeouts", {"total": 0, "recent": []})
+        bucket["total"] = int(bucket.get("total", 0)) + 1
+        entry = {
+            "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "tool": tool_name,
+            "timeout_s": timeout,
+            "detail": (detail or "")[:120],
+        }
+        recent = bucket.setdefault("recent", [])
+        recent.append(entry)
+        if len(recent) > 50:
+            bucket["recent"] = recent[-50:]
+        self._dirty = True
+        return f"已记录 {tool_name} 超时（{timeout}s）"
 
     def record(self, tool_name: str, duration: float = 0.0, success: bool = True) -> str:
         """记录一次工具调用。"""
@@ -336,6 +360,14 @@ class Monitor:
                 f"p95 {agg.quantile(0.95):.1f}ms / p99 {agg.quantile(0.99):.1f}ms"
             )
 
+        # ★B1：超时按次数与占比显式呈现（它是长尾主因，却不在 errors 里）
+        to_bucket = self._data.get("timeouts") or {}
+        to_total = int(to_bucket.get("total", 0))
+        timeout_line = ""
+        if to_total > 0:
+            calls = self._data["total_calls"] or 1
+            timeout_line = f"\n⏱️ 超时次数: {to_total} ({to_total / calls * 100:.1f}% of calls)"
+
         return (
             f"📊 Agent 1 运行摘要\n"
             f"{'='*35}\n"
@@ -345,6 +377,7 @@ class Monitor:
             f"❌ 错误次数: {self._data['total_errors']} ({error_rate:.1f}%)\n"
             f"⚡ 平均响应: {avg_dur:.1f}ms"
             f"{quantile_line}"
+            f"{timeout_line}"
         )
 
     def report(self) -> str:
@@ -396,6 +429,17 @@ class Monitor:
             lines.append("\n## 最近错误")
             for err in self._data["recent_errors"][-5:]:
                 lines.append(f"  ❌ [{err['time']}] {err['tool']} ({err['duration']*1000:.1f}ms)")
+
+        # ★B1：超时统计（长尾主因，独立于错误）
+        to_bucket = self._data.get("timeouts") or {}
+        to_total = int(to_bucket.get("total", 0))
+        if to_total > 0:
+            lines.append(f"\n## 超时统计（共 {to_total} 次）")
+            for item in (to_bucket.get("recent") or [])[-5:]:
+                lines.append(
+                    f"  ⏱️ [{item.get('time')}] {item.get('tool')} "
+                    f"超时 {item.get('timeout_s')}s  {item.get('detail', '')[:60]}"
+                )
 
         return "\n".join(lines)
 

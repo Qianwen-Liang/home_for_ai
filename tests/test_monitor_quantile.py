@@ -249,3 +249,73 @@ def test_report_contains_all_percentiles(tmp_path: Path) -> None:
     # 因此 p99 可能略微超出真实 max_duration，这是有界误差而非 bug。
     tol = t["max_duration"] * 1000 * 1.02 + 1
     assert t["p50_ms"] <= t["p95_ms"] <= t["p99_ms"] <= tol
+
+
+# ── 7. 超时统计（B1） ────────────────────────────────────
+
+def test_record_timeout_counts_separately(tmp_path: Path) -> None:
+    """超时独立计数：不混入 calls，也不混入 errors。
+
+    超时既不抛异常也非成功，混进任一侧都会让指标失真——
+    历史上 120s 长尾在 errors 里永远看不见，正是这个原因。
+    """
+    m = Monitor(path=tmp_path / "m.json")
+    m.record("run_command", 0.1)          # 一次正常调用
+    m.record_timeout("run_command", 30, "pytest")
+    m.record_timeout("run_command", 120, "compile")
+
+    assert m._data["total_calls"] == 1
+    assert m._data["total_errors"] == 0
+    assert m._data["timeouts"]["total"] == 2
+    assert len(m._data["timeouts"]["recent"]) == 2
+
+
+def test_timeout_visible_in_summary_and_report(tmp_path: Path) -> None:
+    m = Monitor(path=tmp_path / "m.json")
+    m.record("run_command", 0.1)
+    m.record_timeout("run_command", 30, "some-slow-cmd")
+
+    summary = m.summary()
+    assert "超时次数" in summary
+
+    report = m.report()
+    assert "超时统计" in report
+    assert "some-slow-cmd" in report
+
+
+def test_timeout_capped_at_50_entries(tmp_path: Path) -> None:
+    """超时明细只保留最近 50 条，防止文件无限膨胀。"""
+    m = Monitor(path=tmp_path / "m.json")
+    for i in range(60):
+        m.record_timeout("run_command", 30, f"cmd-{i}")
+    assert m._data["timeouts"]["total"] == 60
+    assert len(m._data["timeouts"]["recent"]) == 50
+    assert m._data["timeouts"]["recent"][-1]["detail"] == "cmd-59"
+
+
+def test_timeout_survives_reload(tmp_path: Path) -> None:
+    p = tmp_path / "m.json"
+    m = Monitor(path=p)
+    m.record_timeout("run_command", 30, "x")
+    m.flush()
+
+    m2 = Monitor(path=p)
+    assert m2._data["timeouts"]["total"] == 1
+
+
+def test_legacy_data_without_timeouts_field(tmp_path: Path) -> None:
+    """老数据没有 timeouts 字段，读取与报告不得报错。"""
+    legacy = {
+        "total_calls": 5, "total_errors": 0, "start_time": 1.0,
+        "tools": {"t": {"calls": 5, "errors": 0, "total_duration": 1.0,
+                        "max_duration": 0.5, "min_duration": 0.1, "last_called": "10:00"}},
+        "recent_errors": [],
+    }
+    p = tmp_path / "legacy.json"
+    p.write_text(json.dumps(legacy), encoding="utf-8")
+
+    m = Monitor(path=p)
+    assert "超时" not in m.summary()      # 无超时则不显示该行
+    assert m.report()                      # 报告正常生成
+    m.record_timeout("t", 30, "y")         # 老数据上也能新增超时
+    assert m._data["timeouts"]["total"] == 1

@@ -4867,5 +4867,31 @@
       "method",
       "governance"
     ]
+  },
+  "K1793420549": {
+    "id": "K1793420549",
+    "title": "事故复盘：测试清空生产 monitor 数据，G1 三层盲区逐层剥开",
+    "content": "【事故】2026-10-31，跑全量测试清空了 memory/monitor_data.json，丢失 1,832 次调用记录（约 6 周运行统计），无备份不可恢复。\n\n【根因（既有缺陷，非 B0 引入）】\ntests/test_monitor.py:\n```python\ndef _fresh_monitor() -> Monitor:\n    monitor = Monitor()              # ← 默认路径 = 生产文件\n    monitor._data = monitor._fresh_data()\n    return monitor\n```\ntest_reset() 调用 m.reset() → 内部 _save() → 把空 state 直接覆写生产文件。\n\n【为什么 G1 没抓到（三层原因，逐层剥开）】\n1. G1 的测试清单**硬编码 3 个文件**（test_stress / test_e2e / test_experience_learner），\n   test_monitor.py 不在其中 → 真凶从未被跑过。\n2. 修好清单后重跑，仍绿 —— 因为 monitor_data.json 已被清空，\n   清空空文件 = 无哈希变化 = \"已破坏状态无法再检测破坏\"。\n3. 写入 3 条数据后再跑，仍绿 —— 因为 conftest 的 monkeypatch 已把\n   MONITOR_DATA_FILE 重定向到临时文件，**保护层抢先于检测层生效**。\n   必须同时移除 conftest patch 才暴露出 G1 的真实检测能力 → 此时红。\n\n【修复（三层防护）】\n① tests/test_monitor.py：_fresh_monitor 用 mkdtemp 临时路径\n② tests/conftest.py：**两处都 patch** —— 模块单例 _monitor 与模块常量 MONITOR_DATA_FILE。\n   只 patch 单例时，任何 `Monitor()` 新建实例仍走生产路径。\n③ scripts/gate.py：G1 不再硬编码，改为**自动发现**所有引用持久化模块\n   （monitor/knowledge_store/task_tracker/offline_runner/workflow_engine/checkpoint）\n   的测试文件，覆盖 3 → 11 个，耗时 28s → 40s。\n\n【红绿双向验证】\n移除两层隔离 → G1 报 \"1 个已存在的生产文件被测试改写: memory/monitor_data.json\" ❌\n恢复两层隔离 → G1 绿 ✅\n\n【方法论教训】\n- **手工维护的清单一定会漏**。凡是\"列出需要检查的对象\"，都应改为自动发现。\n- **验证门禁要验证到\"检测层\"，而不是停在\"保护层\"**。保护生效时门禁永远是绿的，\n  这不能证明它能抓贼，只能证明不需要它。要专门造一个保护失效的场景。\n- **空状态是检测的盲区**：已经被破坏的东西，再破坏一次没有痕迹。\n  这类验证必须先恢复一个\"有内容\"的基线。\n- 运行时统计属于易失数据，**不接受\"丢了就丢了\"之外没有别的办法** ——\n  除非它被纳入某个持久化/备份机制。当前 monitor 数据无备份，是已知缺口。",
+    "category": "lesson",
+    "tags": [
+      "数据丢失",
+      "测试污染",
+      "monitor",
+      "G1盲区",
+      "红绿验证",
+      "自动发现",
+      "保护层vs检测层"
+    ],
+    "source": "",
+    "created_at": 1793420549.4266012,
+    "updated_at": 1793420549.4266012,
+    "version": 1,
+    "kind": "boundary",
+    "semantic_tags": [
+      "pitfall",
+      "boundary",
+      "lesson",
+      "incident"
+    ]
   }
 }
