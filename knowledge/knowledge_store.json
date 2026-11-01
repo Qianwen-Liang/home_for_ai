@@ -4990,5 +4990,29 @@
       "boundary",
       "method"
     ]
+  },
+  "K1793501171": {
+    "id": "K1793501171",
+    "title": "契约修复与测试设计教训：不要锁定被测系统的当前状态",
+    "content": "【T2828 role_system 契约修复 + 一个测试设计教训】\n\n【缺陷】\ntools/role_system.py 声明 TOOL_DEFINITION.name = \"role_system\"，\n但执行函数叫 `execute_role_tool`（少了 _system），\n而 self_check 按约定推导 `execute_{name}_tool` → 报\"有定义但无执行函数\"。\n\n调研确认：全仓（tools/tests/evolver/core/scripts/village）无任何外部调用方，\n改名零风险。修复：重命名为 execute_role_system_tool + 保留旧名别名。\n\n【关键决策：不只修个案，加强通用约束】\n只改 role_system 等于等着下一个模块再犯。\n新增通用测试 `test_all_tool_modules_follow_naming_convention`：\n凡声明 TOOL_DEFINITION 的模块，必须有 execute_{name}_tool 或同名函数。\n一次性把约定断言到全部 42 个模块。\n\n【★测试设计教训：不要锁定被测系统的当前状态】\n修好后我自己的两条旧测试失败：\n  test_missing_execute_function_warns —— 断言 role_system 会产生警告（现已修复）\n  test_health_is_not_falsely_green    —— 断言报告不应为绿（现在全绿）\n它们写于\"bug 存在时\"，锁定的是当时的状态，而非检查逻辑本身。\n\n**改为构造人造场景**：\n  - 临时创建一个只有 TOOL_DEFINITION、没有执行函数的假模块 → 断言产生警告\n  - monkeypatch _discover_modules 注入不存在的模块 → 断言状态不为绿\n这样测试验证的是\"逻辑是否正确\"，修不修 bug 都不影响它。\n\n判据：**测试挂掉时，先问\"是逻辑坏了，还是测试锁定了过时状态\"**。\n如果测试里出现具体模块名/具体 bug 症状，大概率是后者。\n\n【结果】\nself_check: 69/69，0 警告，0 失败，覆盖 100%（真实的全绿）\n全量 693 passed\n已合并 main（3c03f6c）",
+    "category": "lesson",
+    "tags": [
+      "命名约定",
+      "契约",
+      "测试设计",
+      "状态锁定",
+      "人造场景",
+      "role_system"
+    ],
+    "source": "",
+    "created_at": 1793501171.5967348,
+    "updated_at": 1793501171.5967348,
+    "version": 1,
+    "kind": "boundary",
+    "semantic_tags": [
+      "pitfall",
+      "method",
+      "lesson"
+    ]
   }
 }

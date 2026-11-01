@@ -52,13 +52,28 @@ def _related_boundaries(title: str, description: str = "", limit: int = 2) -> li
     query = f"{title} {description}".strip()
     if not query:
         return []
+
+    results: list[str] = []
+    # ★T2829：先查「已知死路」清单——已证否的方向，比一般边界更硬。
+    # 该能力原只存在于 decision_engine.gate()，而 gate 从不被调用，
+    # 等于 6 条死路结论（如"18 次参数变异全部 REJECT"）从未在立项时起作用。
+    try:
+        from tools.decision_engine import match_dead_ends
+        for entry, _hits in match_dead_ends(query):
+            verdict = str(entry.get("verdict", ""))[:52]
+            if verdict:
+                results.append(f"[死路] {verdict}")
+            break          # 命中一条即足够醒目，避免刷屏
+    except Exception:  # noqa: BLE001  死路清单不可用不应阻塞建任务
+        pass
+
     try:
         from tools.knowledge_store import _store
         out = _store.search(query, limit, mode="keyword", kind="boundary")
     except Exception:  # noqa: BLE001  知识库异常不应阻塞建任务
-        return []
+        return results
     if not out or "未找到" in out:
-        return []
+        return results
 
     # 解析形如：  ⭐⭐⭐ [K1793367001] 标题 (category)
     # 解析并**按分数过滤**：knowledge_store.search 没有相关性阈值，
@@ -67,7 +82,6 @@ def _related_boundaries(title: str, description: str = "", limit: int = 2) -> li
     # 取 15.0 作阈值（实测中点偏保守，宁缺勿滥）。
     MIN_SCORE = 15.0
     lines = out.splitlines()
-    results: list[str] = []
     for i, line in enumerate(lines):
         m = re.match(r"\s*⭐*\s*\[(K[0-9A-Za-z_]+)\]\s*(.+)", line)
         if not m:

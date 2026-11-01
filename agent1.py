@@ -119,11 +119,17 @@ ALL_TOOLS = (
     + [tool_artifact_validator.TOOL_DEFINITION]   # artifact_validator(3) 强制校验协议
     + [tool_evidence.TOOL_DEFINITION]             # evidence_verifier(2) 强制校验协议
     + [tool_multi_reviewer.TOOL_DEFINITION]       # multi_reviewer(1) 强制校验协议
+    + [tool_decision.TOOL_DEFINITION]             # decision_engine(289 tok) 立项门禁/死路核查
 )
+
+# ★T2829：decision_engine 恢复注册。它持有 6 条「已知死路」清单
+# （如"单点参数变异 18 次全部 REJECT"）+ 边界卡片注入 + 历史失败决策匹配，
+# 是防止重复撞墙的核心资产，此前因 P0 收敛被移出注册表 → LLM 完全看不见 → 从不被调用。
+# schema 成本 289 tokens，恢复后总量 3,154，仍在 3,500 预算内。
 
 # P0 移出注册表的工具（代码保留，可恢复）。详见 legacy_tools.json
 LEGACY_TOOLS = (
-    "file_utils", "monitor", "decision_engine", "safety_net", "offline",
+    "file_utils", "monitor", "safety_net", "offline",
     "checkpoint", "specialist", "agent_profile", "task_dispatcher", "orchestrator",
     "health_dashboard", "usage_analyzer", "tech_radar", "env_awareness",
     "evolution_strategy", "audit_log", "blackboard", "auto_repair", "villager",
@@ -239,6 +245,10 @@ _TOOL_SPEC_TABLE = [
      dict(read_only=True, idempotent=True, budget_chars=20_000), ()),
     ("multi_reviewer", tool_multi_reviewer.execute_multi_reviewer_tool,
      dict(read_only=True, idempotent=True, budget_chars=20_000), ()),
+    # ★T2829：恢复 decision_engine —— 持有 6 条已知死路清单 + 边界卡片注入 +
+    # 历史失败决策匹配，是防止重复撞墙的核心能力，此前被 P0 收敛移出后从未被调用。
+    ("decision_engine", tool_decision.execute_decision_engine_tool,
+     dict(idempotent=True, budget_chars=20_000), ()),
 ]
 
 # 步骤 4.2：各工具错误契约（声明式，替代手工 except 元组登记）
@@ -262,6 +272,7 @@ _TOOL_ERROR_TYPES: dict[str, tuple] = {
     "calculate": _errors_of(globals().get("CalculationError")),
     "test_runner": _errors_of(globals().get("TestRunnerError")),
     "artifact_validator": _errors_of(_AV_ERR),
+    "decision_engine": _errors_of(globals().get("DecisionError")),
 }
 
 for _name, _handler, _flags, _deps in _TOOL_SPEC_TABLE:
@@ -276,7 +287,7 @@ for _name, _handler, _flags, _deps in _TOOL_SPEC_TABLE:
         ))
 
 # 字节稳定断言：默认配置下，注册表装配结果必须与既有 ALL_TOOLS 完全一致
-_BASELINE_SHA256 = "080f15c10733ba632f6cc95ab26b4147879123c09307103db9781c6b9bd6f8d0"
+_BASELINE_SHA256 = "69888159b0d96359328184ebd47467547e91f28fa917242baed18bcb444108b2"
 if not ENABLED_LEGACY:
     _registry_payload = REGISTRY.fingerprint(REGISTRY.names())
     _current_payload = __import__("json").dumps(
@@ -288,7 +299,11 @@ if not ENABLED_LEGACY:
             f"\n  ALL_TOOLS: {len(_current_payload)} 字符"
         )
     if _hashlib.sha256(_registry_payload.encode()).hexdigest() != _BASELINE_SHA256:
-        raise RuntimeError("注册表装配哈希与基线不符，已拒绝启动。")
+        raise RuntimeError(
+            "注册表装配哈希与基线不符，已拒绝启动。"
+            f"\n  如果是有意变更工具集，请更新 _BASELINE_SHA256 为："
+            f"{_hashlib.sha256(_registry_payload.encode()).hexdigest()}"
+        )
 _MISSING_DEPS = REGISTRY.validate_dependencies()
 if _MISSING_DEPS:
     raise RuntimeError(f"工具依赖闭包不完整: {_MISSING_DEPS}")

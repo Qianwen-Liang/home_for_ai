@@ -237,6 +237,21 @@ class DecisionEngine:
 
     # ── 公开接口 ────────────────────────────────────────
 
+    def match_dead_ends(self, text: str) -> list[tuple[dict[str, Any], list[str]]]:
+        """匹配「已知死路」清单，返回 [(条目, 命中词)]。
+
+        ★T2829：从 gate() 中抽出，供两处复用——
+          gate() 输出完整门禁报告；task_tracker 建任务时只需一句摘要。
+        抽出而非各自实现，避免两套匹配逻辑长期漂移。
+        """
+        low = (text or "").lower()
+        hits: list[tuple[dict[str, Any], list[str]]] = []
+        for entry in self._DEAD_ENDS:
+            matched = [k for k in entry.get("keywords", []) if k in low]
+            if matched:
+                hits.append((entry, matched))
+        return hits
+
     def gate(self, proposal: str) -> str:
         """立项门禁：立项前强制核查负面先验 + 已知死路 + 开放问题 + 失败判据。
 
@@ -248,12 +263,8 @@ class DecisionEngine:
 
         prop_lower = proposal.lower()
 
-        # 1. 内置死路/开放问题清单匹配
-        dead_hits = []
-        for entry in self._DEAD_ENDS:
-            hits = [k for k in entry["keywords"] if k in prop_lower]
-            if hits:
-                dead_hits.append((entry, hits))
+        # 1. 内置死路/开放问题清单匹配（★T2829：抽出为 match_dead_ends，供 task_tracker 复用）
+        dead_hits = self.match_dead_ends(proposal)
 
         # 2. 知识库 boundary 卡片检索
         boundary_hits = self._fetch_boundary_warnings(proposal, max_results=4)
@@ -499,6 +510,14 @@ class DecisionEngine:
 # ── 全局实例 ──────────────────────────────────────────────
 
 _engine = DecisionEngine()
+
+
+def match_dead_ends(text: str) -> list[tuple[dict[str, Any], list[str]]]:
+    """模块级便捷入口（★T2829）：复用全局单例，供 task_tracker 等高频调用方使用。
+
+    直接 `DecisionEngine()` 会重新读一次 decisions 文件；建任务时不该付这个代价。
+    """
+    return _engine.match_dead_ends(text)
 
 
 def execute_decision_engine_tool(arguments: dict[str, Any]) -> str:
