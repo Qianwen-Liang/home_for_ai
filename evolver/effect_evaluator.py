@@ -48,6 +48,11 @@ class MetricSnapshot:
     total_errors: int = 0
     error_rate: float = 0.0
     avg_response_ms: float = 0.0
+    # ★T2840：均值不足以衡量改进效果——它被长尾完全主导
+    # （实测 run_command 均值 7054ms，中位数仅 83ms）。
+    # 用均值差当「性能改进量」，实际反映的是「期间有几次超时」，
+    # 而不是命令本身变快了多少。故增加 p95 作为主判定依据。
+    p95_ms: float = 0.0
     slow_tool_count: int = 0         # 响应 > 500ms 的工具数
 
     # 健康指标
@@ -106,7 +111,8 @@ class EffectReport:
     # 各维度变化（正数为改进，负数为退化）
     health_delta: int = 0
     error_rate_delta: float = 0.0
-    perf_delta_ms: float = 0.0       # 平均响应时间变化
+    perf_delta_ms: float = 0.0       # 响应时间变化（口径见 perf_basis）
+    perf_basis: str = "avg"          # ★T2840：p95 | avg，标明用了哪个统计量
     test_pass_delta: int = 0
     knowledge_delta: int = 0
     import_delta_ms: float = 0.0       # 导入耗时变化（正数=加速）
@@ -185,6 +191,14 @@ class EffectEvaluator:
                 and t.get("total_duration", 0) / t["total_calls"] * 1000 > 500
             )
             snap.tool_count = len(tools_data)
+
+            # ★T2840：采 p95（取最慢工具的 p95 作为系统级代表），供改进效果对比使用。
+            # 与 health_dashboard 保持同一口径，避免两处对「慢」的定义不一致。
+            _p95s = [
+                t.get("p95_ms") for t in tools_data.values()
+                if isinstance(t.get("p95_ms"), (int, float)) and t.get("p95_ms") > 0
+            ]
+            snap.p95_ms = round(max(_p95s), 2) if _p95s else 0.0
         except Exception:
             pass
 
@@ -440,7 +454,16 @@ class EffectEvaluator:
         # 计算各维度变化
         report.health_delta = after.health_score - before.health_score
         report.error_rate_delta = round(before.error_rate - after.error_rate, 2)  # 正数=改善
-        report.perf_delta_ms = round(before.avg_response_ms - after.avg_response_ms, 2)
+        # ★T2840：优先用 p95 计算性能改进量。
+        # 均值差反映的是「期间有几次超时」，而非「命令变快了多少」——
+        # 例：100 次快命令从 50ms 优化到 40ms（真实改进 20%），
+        # 但若期间出现一次 120s 超时，均值变化会被它完全主导。
+        if before.p95_ms > 0 and after.p95_ms > 0:
+            report.perf_delta_ms = round(before.p95_ms - after.p95_ms, 2)
+            report.perf_basis = "p95"
+        else:
+            report.perf_delta_ms = round(before.avg_response_ms - after.avg_response_ms, 2)
+            report.perf_basis = "avg"
         report.knowledge_delta = after.knowledge_entries - before.knowledge_entries
 
         # 导入性能变化（v2.0 新增）
@@ -496,12 +519,15 @@ class EffectEvaluator:
                 scores.append(
                     max(-1.0, min(1.0, import_change / before.module_import_ms)) * 0.10
                 )
-        # 平均响应时间（显著性阈值 5% 或 1ms）
-        if before.avg_response_ms > 0:
-            perf_change = before.avg_response_ms - after.avg_response_ms  # 正=加速
-            if abs(perf_change) >= max(before.avg_response_ms * 0.05, 1.0):
+        # ★T2840：响应时间评分必须与 perf_delta 用同一口径。
+        # 原实现在这里又独立算了一遍**均值差**，于是即使 delta 改用 p95，
+        # 评分仍被长尾主导——改了口径却没改判定，等于白改。
+        perf_base = before.p95_ms if report.perf_basis == "p95" else before.avg_response_ms
+        if perf_base > 0:
+            perf_change = report.perf_delta_ms  # 正=加速（p95 优先，已在上面算好）
+            if abs(perf_change) >= max(perf_base * 0.05, 1.0):
                 scores.append(
-                    max(-1.0, min(1.0, perf_change / before.avg_response_ms)) * 0.10
+                    max(-1.0, min(1.0, perf_change / perf_base)) * 0.10
                 )
 
         # ── 健壮性维度（权重 0.15）──

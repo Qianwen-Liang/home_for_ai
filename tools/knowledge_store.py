@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import json
 import math
+import threading
 import time
 from collections import Counter
 from dataclasses import dataclass, field, asdict
@@ -46,6 +47,13 @@ MAX_VECTOR_CACHE = 2_000
 # 取保守值，使中小规模知识库（当前 225 条）完全等价于全量精排，
 # 只有库显著增长后粗筛才生效，避免检索延迟随库体积线性膨胀。
 STAGE1_MIN_CANDIDATES = 300
+
+# ★T2840：写路径互斥锁。
+# G2 门禁的并发测试抓到真实异常："dictionary changed size during iteration"——
+# 线程 A 在 _save() 里 json.dumps(self._data) 迭代字典时，
+# 线程 B 正在 store() 里插入新条目。本模块此前**完全没有锁**。
+# 用 RLock（可重入），因为 store() 持锁后还会调用同样加锁的 _save()。
+_WRITE_LOCK = threading.RLock()
 
 # ── 可选导入：语义搜索依赖（惰性加载，避免 self_check 等场景的性能损耗）──
 
@@ -842,14 +850,15 @@ class KnowledgeStore:
             self._data = {}
 
     def _save(self) -> None:
-        """保存知识库到文件。"""
-        KNOWLEDGE_DIR.mkdir(parents=True, exist_ok=True)
-        self._path.write_text(
-            json.dumps(self._data, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
-        # 数据变化 → 索引失效
-        self._data_version += 1
+        """保存知识库到文件（★T2840：持写锁，避免序列化时被并发插入打断）。"""
+        with _WRITE_LOCK:
+            KNOWLEDGE_DIR.mkdir(parents=True, exist_ok=True)
+            self._path.write_text(
+                json.dumps(self._data, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            # 数据变化 → 索引失效
+            self._data_version += 1
 
     # ── 检索索引（★5.1 两阶段检索的 Stage 1 基础设施） ──────────
 
@@ -987,35 +996,40 @@ class KnowledgeStore:
         if kind not in ("declarative", "procedural", "boundary"):
             kind = "declarative"
 
-        now = time.time()
-        entry_id = f"K{int(now)}"
-        # ★5.1：同一秒内连续 store 会生成相同 ID，原实现直接覆盖导致**静默丢数据**
-        # （实测两条知识卡片在同一秒写入，第一条被第二条整条覆盖）。
-        if entry_id in self._data:
-            suffix = 1
-            while f"{entry_id}_{suffix}" in self._data:
-                suffix += 1
-            entry_id = f"{entry_id}_{suffix}"
-        tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
-        sem_tag_list = (
-            [t.strip() for t in semantic_tags.split(",") if t.strip()]
-            if semantic_tags else []
-        )
+        # ★T2840：整段写入必须在写锁内。
+        # 只在 _save() 里加锁不够——`self._data[entry_id] = ...` 在锁外时，
+        # 另一线程的 _save() 仍会在 json.dumps 迭代期间看到字典尺寸变化，
+        # 抛出 "dictionary changed size during iteration"（G2 门禁实测捕获）。
+        with _WRITE_LOCK:
+            now = time.time()
+            entry_id = f"K{int(now)}"
+            # ★5.1：同一秒内连续 store 会生成相同 ID，原实现直接覆盖导致**静默丢数据**
+            # （实测两条知识卡片在同一秒写入，第一条被第二条整条覆盖）。
+            if entry_id in self._data:
+                suffix = 1
+                while f"{entry_id}_{suffix}" in self._data:
+                    suffix += 1
+                entry_id = f"{entry_id}_{suffix}"
+            tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
+            sem_tag_list = (
+                [t.strip() for t in semantic_tags.split(",") if t.strip()]
+                if semantic_tags else []
+            )
 
-        entry = KnowledgeEntry(
-            id=entry_id,
-            title=title.strip(),
-            content=content.strip(),
-            category=category.strip() or "general",
-            tags=tag_list,
-            kind=kind,
-            semantic_tags=sem_tag_list,
-            created_at=now,
-            updated_at=now,
-        )
+            entry = KnowledgeEntry(
+                id=entry_id,
+                title=title.strip(),
+                content=content.strip(),
+                category=category.strip() or "general",
+                tags=tag_list,
+                kind=kind,
+                semantic_tags=sem_tag_list,
+                created_at=now,
+                updated_at=now,
+            )
 
-        self._data[entry_id] = asdict(entry)
-        self._save()
+            self._data[entry_id] = asdict(entry)
+            self._save()
 
         return f"✅ 已存储知识条目 [{entry_id}]: {title} ({kind})"
 

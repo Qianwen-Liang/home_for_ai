@@ -153,7 +153,12 @@ def test_g3_green_with_real_baseline():
 # ══════════════════════════════════════════════════════════
 
 def test_g4_red_when_regressed(monkeypatch, tmp_path):
-    """红向：基线值远小于当前实测 → G4 必须变红。"""
+    """红向：基线值远小于当前实测 → G4 必须变红。
+
+    ★注入固定测量结果：原实现跑真实测量，全量测试时 CPU 负载升高会让 CV
+    超过 25% 触发"环境不稳则跳过判定"，本用例就在全量跑时随机失败。
+    门禁判定逻辑的测试不该依赖环境状态。
+    """
     cur_platform = f"{platform.system()}-{platform.python_version()}"
     baseline = tmp_path / "perf_baseline.json"
     baseline.write_text(json.dumps({
@@ -162,6 +167,11 @@ def test_g4_red_when_regressed(monkeypatch, tmp_path):
                    ["缓存 优化 性能", "语义检索", "如何设计契约测试"]},
     }), encoding="utf-8")
     monkeypatch.setattr(gate, "PERF_BASELINE", baseline)
+    monkeypatch.setattr(
+        gate, "_measure_p50",
+        lambda: ({q: 0.10 for q in ["缓存 优化 性能", "语义检索", "如何设计契约测试"]},
+                 {q: 0.02 for q in ["缓存 优化 性能", "语义检索", "如何设计契约测试"]}),
+    )
 
     result = gate.check_g4()
     assert result["passed"] is False, "性能退化未被 G4 捕获"
