@@ -570,7 +570,25 @@ class TaskDispatcher:
             )
 
         except Exception as exc:
-            return f"❌ 调度失败: {exc}"
+            # ★T2835 Saga 补偿：assign_task 可能已把 Agent 置为 busy，
+            # 若之后的步骤（_save / 消息发送 / 状态写入）抛异常，
+            # 必须把 Agent 恢复为空闲，否则它会永久卡在 busy，
+            # 后续 _find_best_agent 再也不选它 —— 典型的部分失败脏状态。
+            # 原实现这里只 `return f'❌ 调度失败: {exc}'`，不做任何补偿。
+            if subtask is not None and subtask.status == SubtaskStatus.ASSIGNED.value:
+                try:
+                    from tools.agent_manager import _manager
+                    _manager.task_failed(
+                        agent_id=subtask.assigned_agent,
+                        task_id=subtask.task_id,
+                        error=f"调度中断: {exc}",
+                    )
+                except Exception:  # noqa: BLE001  补偿失败不应掩盖原始错误
+                    pass
+                subtask.status = SubtaskStatus.PENDING.value
+                subtask.assigned_agent = ""
+                subtask.started_at = ""
+            return f"❌ 调度失败: {exc}（已回滚 Agent 占用状态）"
 
     # ── 全量调度 ──────────────────────────────────────────
 
