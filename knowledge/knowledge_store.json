@@ -5201,5 +5201,29 @@
       "lesson",
       "method"
     ]
+  },
+  "K1793518970": {
+    "id": "K1793518970",
+    "title": "offline_runner 一轮挖出4缺陷：ID冲突/假取消/终态失守/resume卡死",
+    "content": "【T2837 offline_runner：一轮审查挖出 4 个缺陷】\n\n本次是三轮审查中缺陷密度最高的模块。\n\n【缺陷1：task_id 秒级时间戳冲突（数据丢失）】\n`task_id = f\"OT-{datetime.now().strftime('%Y%m%d%H%M%S')}\"`\n同一秒内提交两个任务 → 相同 ID → 后者静默覆盖前者，**任务直接丢失**。\n修复：加 uuid 后缀 `OT-{timestamp}-{uuid6}`。\n★这是本项目第三次被时间戳精度咬：\n  ① checkpoint 排序（time_ns 分辨率 15.6ms）\n  ② knowledge ID 冲突（同秒覆盖）\n  ③ offline task_id（同秒覆盖）\n**凡是用时间戳当唯一键的地方，都该假设它不唯一。**\n\n【缺陷2：cancel 是假取消（语义欺骗）】\n`cancel()` 把 status 设为 \"paused\"，却返回「已取消」。\n后果：用户仍可 resume 把\"已取消\"的任务捡回来。取消是终态，不能等于暂停。\n修复：新增 cancelled 终态。\n\n【缺陷3：execute 不拦截终态（结果被覆盖）】\n`execute()` 只 `if status == 'running': 拒绝`，done/cancelled 的任务可被重跑，\n已完成的结果被覆盖。\n修复：显式拦截 done 与 cancelled，提示\"如需重跑请重新提交\"。\n\n【缺陷4：resume 导致永久卡死】\nresume 把 status 设为 'running'，而 execute 拒绝 running（\"正在执行中\"）\n→ pause → resume → execute 这条路径**永久卡死**，任务停在 running 再也推不动。\n修复：resume 改为回到 'pending'（与\"从 phases 开头重跑\"的实现一致）。\n★旧测试 `test_pause_resume` 断言 resume 后是 running —— **锁定的正是卡死缺陷**，\n  已更新。这是第二次遇到\"测试锁定缺陷行为\"（前次是 fix_actions）。\n\n【测试】13 个新用例 + 更新 1 个旧用例：\n  cancel 终态不可 resume/execute、done 不可 cancel/不可重跑、\n  pause 只对 running 生效、resume→execute 畅通、幂等键去重、参数契约\n\n【方法论】\n- 状态机的正确性 = **明确列出合法跃迁 + 每条非法跃迁都有守卫**。\n  只写\"正常路径\"的状态机，必然在边界上留下卡死或越权。\n- 缺陷密度不均：这个模块 896 行，一轮挖出 4 个，说明**状态密集型模块**值得优先审查。\n- 三次时间戳冲突表明：`time.time_ns()` 名字里有 ns，不代表精度是 ns；\n  用时间戳做唯一键前，先跑一行代码验证它的实际分辨率。",
+    "category": "experience",
+    "tags": [
+      "offline_runner",
+      "状态机",
+      "终态守卫",
+      "时间戳冲突",
+      "假取消",
+      "resume卡死"
+    ],
+    "source": "",
+    "created_at": 1793518970.3395524,
+    "updated_at": 1793518970.3395524,
+    "version": 1,
+    "kind": "procedural",
+    "semantic_tags": [
+      "method",
+      "lesson",
+      "boundary"
+    ]
   }
 }

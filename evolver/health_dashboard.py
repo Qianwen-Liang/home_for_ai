@@ -94,15 +94,23 @@ class HealthDashboard:
             return {"source": "self_check", "error": str(exc), "healthy": False}
 
     def _collect_monitor(self) -> dict[str, Any]:
-        """调用 monitor 获取性能摘要数据。"""
+        """调用 monitor 获取性能摘要数据（取数 + 计算分离，便于测试计算逻辑）。"""
         try:
             from tools.monitor import _monitor
 
             summary = _monitor.summary()
             self._monitor_summary = summary
+            return self._collect_monitor_from(_monitor._data)
+        except Exception as exc:
+            return {"source": "monitor", "error": str(exc)}
 
-            # 从 monitor 内部数据提取指标
-            data = _monitor._data
+    def _collect_monitor_from(self, data: dict[str, Any]) -> dict[str, Any]:
+        """从 monitor 数据字典计算性能指标（纯函数，无副作用，便于单测）。
+
+        ★T2838：抽出的原因 —— 原 `_collect_monitor` 把取数和计算揉在一起，
+        无法在不碰生产 monitor 数据的前提下验证「p95 口径」是否正确。
+        """
+        try:
             total_calls = data.get("total_calls", 0)
             total_errors = data.get("total_errors", 0)
             tool_count = len(data.get("tools", {}))
@@ -117,7 +125,19 @@ class HealthDashboard:
                 total_dur / total_calls * 1000 if total_calls > 0 else 0
             )
 
-            healthy = error_rate < 5.0 and avg_dur_ms < 500
+            # ★T2838：口径对齐。monitor 从 B0 起已提供每工具 p50/p95/p99，
+            # 但本模块仍只用均值——而均值会被长尾完全污染
+            # （实测 run_command 均值 7054ms，实际中位数只有 83ms）。
+            # 取「最慢工具的 p95」作为系统级 p95 代表，用于健康判定。
+            p95_values = [
+                t.get("p95_ms") for t in data.get("tools", {}).values()
+                if isinstance(t.get("p95_ms"), (int, float)) and t.get("p95_ms") > 0
+            ]
+            p95_ms = max(p95_values) if p95_values else None
+
+            # 优先用 p95 判定（抗长尾），无分位数数据时回退均值
+            latency_basis = p95_ms if p95_ms is not None else avg_dur_ms
+            healthy = error_rate < 5.0 and latency_basis < 500
 
             return {
                 "source": "monitor",
@@ -126,6 +146,8 @@ class HealthDashboard:
                 "error_rate": round(error_rate, 1),
                 "tool_count": tool_count,
                 "avg_response_ms": round(avg_dur_ms, 1),
+                "p95_ms": round(p95_ms, 1) if p95_ms is not None else None,
+                "latency_basis": "p95" if p95_ms is not None else "avg",
                 "has_data": total_calls > 0,   # 数据新鲜度：无调用记录时性能维度无法评估
                 "healthy": healthy,
             }
@@ -203,13 +225,20 @@ class HealthDashboard:
                         score -= 15
                         self._warnings.append(f"错误率偏高: {error_rate}%")
 
-                    avg_ms = r.get("avg_response_ms", 0)
-                    if avg_ms > 1000:
+                    # ★T2838：用 latency_basis（优先 p95）判定，而非裸均值。
+                    # 均值被长尾污染时会把健康系统误判为过慢。
+                    basis = r.get("latency_basis", "avg")
+                    latency_ms = r.get("p95_ms") if basis == "p95" else r.get("avg_response_ms", 0)
+                    if latency_ms is None:
+                        latency_ms = r.get("avg_response_ms", 0)
+                        basis = "avg"
+                    label = "P95 响应" if basis == "p95" else "平均响应"
+                    if latency_ms > 1000:
                         score -= 15
-                        self._issues.append(f"平均响应过慢: {avg_ms}ms")
-                    elif avg_ms > 500:
+                        self._issues.append(f"{label}过慢: {latency_ms}ms")
+                    elif latency_ms > 500:
                         score -= 5
-                        self._warnings.append(f"平均响应偏慢: {avg_ms}ms")
+                        self._warnings.append(f"{label}偏慢: {latency_ms}ms")
 
             elif source == "safety_net":
                 if "error" in r:
