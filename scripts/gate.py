@@ -41,7 +41,13 @@ PROTECTED = [
     "memory/knowledge_store.json",
 ]
 
-PERF_THRESHOLD = 0.20          # p50 退化超过 20% 即红
+# ★T2839：阈值从 20% 提到 50%。依据是**实测噪声带宽**而非感觉：
+# 同一份代码连测 12 轮（每轮预热3+采样5取中位数），三个查询的极差分别为
+# 19.6% / 23.3% / 29.9% —— 20% 阈值落在噪声带内部，必然随机误报。
+# 实测曾出现「语义检索 +20%」而改动完全不涉及检索，重试即通过。
+# 50% 相对 30% 噪声留 1.67x 余量；而真实退化量级远大于此
+# （knowledge 两阶段改造前为 0.237s vs 0.09s，约 +160%），仍能可靠捕获。
+PERF_THRESHOLD = 0.50          # p50 退化超过 50% 即红（噪声带约 30%）
 PERF_REPEAT = 5
 
 # G1 默认要跑的测试：凡是引用了「会写持久化状态」模块的测试文件。
@@ -438,16 +444,34 @@ def check_g4(rebuild: bool = False) -> dict:
 
     if rebuild or not PERF_BASELINE.is_file():
         import platform as _platform
+        # ★T2839：基线不能只测一轮。单次测量本身就是噪声样本
+        # （实测同一份代码 12 轮极差可达 30%），用它当基准会把噪声固化。
+        # 改为连续 3 轮各取中位数，再取这三轮的中位数作为基线，
+        # 同时记录轮间极差作为「噪声带」写入基线文件，供判定时参考。
+        rounds: list[dict[str, float]] = [current]
+        for _ in range(2):
+            more, _cv = _measure_p50()
+            rounds.append(more)
+        stable: dict[str, float] = {}
+        noise_band: dict[str, float] = {}
+        for q in current:
+            vals = sorted(r[q] for r in rounds if q in r)
+            stable[q] = round(vals[len(vals) // 2], 5)
+            noise_band[q] = round((vals[-1] - vals[0]) / vals[0] * 100, 1) if vals[0] else 0.0
         PERF_BASELINE.write_text(json.dumps({
             "_doc": "G4 性能基线。重建：python scripts/gate.py --baseline G4",
             "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
             "platform": f"{_platform.system()}-{_platform.python_version()}",
             "metric": "knowledge.keyword_search.p50_s",
             "repeat": PERF_REPEAT,
-            "values": current,
+            "rounds": len(rounds),
+            "threshold": PERF_THRESHOLD,
+            "noise_band_pct": noise_band,
+            "values": stable,
         }, ensure_ascii=False, indent=2), encoding="utf-8")
         return _result("G4", "性能回归", True,
-                       f"基线已建立: {current}", {"values": current, "baseline_created": True})
+                       f"基线已建立（{len(rounds)} 轮取中位数）: {stable}；噪声带 {noise_band}",
+                       {"values": stable, "noise_band": noise_band, "baseline_created": True})
 
     base = json.loads(PERF_BASELINE.read_text(encoding="utf-8"))
     base_values = base.get("values", {})

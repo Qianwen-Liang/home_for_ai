@@ -1,12 +1,19 @@
 {
   "_doc": "G4 性能基线。重建：python scripts/gate.py --baseline G4",
-  "generated_at": "2026-10-30 22:54:10",
+  "generated_at": "2026-11-01 16:28:25",
   "platform": "Windows-3.11.15",
   "metric": "knowledge.keyword_search.p50_s",
   "repeat": 5,
+  "rounds": 3,
+  "threshold": 0.5,
+  "noise_band_pct": {
+    "缓存 优化 性能": 13.8,
+    "语义检索": 13.1,
+    "如何设计契约测试": 16.5
+  },
   "values": {
-    "缓存 优化 性能": 0.09421,
-    "语义检索": 0.04303,
-    "如何设计契约测试": 0.05818
+    "缓存 优化 性能": 0.1162,
+    "语义检索": 0.05547,
+    "如何设计契约测试": 0.07177
   }
 }

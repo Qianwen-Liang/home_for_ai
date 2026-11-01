@@ -5225,5 +5225,28 @@
       "lesson",
       "boundary"
     ]
+  },
+  "K1793520883": {
+    "id": "K1793520883",
+    "title": "health_dashboard 口径修复：均值判健康会漏掉长尾；顺带暴露 G4 假警报",
+    "content": "【T2838 health_dashboard：用均值判健康 = 用错的统计量】\n\n【缺陷】health_dashboard 判断性能健康用 `avg_response_ms < 500`，\n而均值恰恰是这里最不该用的统计量：\n  run_command 实测均值 7054ms，中位数只有 83ms —— 差两个数量级，\n  因为少数几次 120s 超时把总耗时全吃掉了。\n\nmonitor 从 B0 起已提供 p50/p95/p99，但 health_dashboard **完全没接**——\n又是\"能力存在但下游不读\"。\n\n【修复】\n1. `_collect_monitor` 增加 p95 采集：取「最慢工具的 p95」作为系统级代表\n2. 判定优先用 p95，无分位数数据时才回退均值\n3. 数据里显式标注 `latency_basis: \"p95\" | \"avg\"`，报告不能 MISREAD\n4. 拆出 `_collect_monitor_from(data)` 纯函数 —— 原实现把取数和计算揉在一起，\n   无法在不碰生产 monitor 数据的前提下验证阈值逻辑\n\n【关键验证】构造 avg=100ms（低）但 p95=30000ms（长尾）：\n  修复前 healthy=True（漏判）\n  修复后 healthy=False ✓\n这是修复前后差异最大的场景，已用测试锁定。\n\n【★同时暴露的 G4 问题】\n本次 commit 时 pre-commit 的 G4 报「语义检索 0.0430s→0.0518s (+20%)」，\n但我的改动完全不涉及 knowledge 检索；重试立即通过（4/4）。\n说明 **G4 阈值 20% 恰好卡在环境噪声带边缘**，会产生随机假警报。\n\n危害：门禁随机失败比稳定失败更糟——它让\"红灯\"失去信息量，\n人会开始习惯性重试，等于绕过门禁。这和我们批评过的\"装饰性治理\"是同一结局。\n\n待办建议：把 G4 阈值提高到 30%（实测噪声上限 20%），\n或改用「多次运行取中位数 + 与基线比较相对变化」的统计判定。\n\n【方法论】\n**选错统计量等于选错结论。** 均值假设分布对称、无极端值；\n真实延迟分布恰恰相反（长尾）。凡涉及延迟/耗时，默认用分位数。",
+    "category": "experience",
+    "tags": [
+      "health_dashboard",
+      "均值vs分位数",
+      "长尾",
+      "口径对齐",
+      "G4阈值假警报"
+    ],
+    "source": "",
+    "created_at": 1793520883.221566,
+    "updated_at": 1793520883.221566,
+    "version": 1,
+    "kind": "procedural",
+    "semantic_tags": [
+      "method",
+      "lesson",
+      "boundary"
+    ]
   }
 }
