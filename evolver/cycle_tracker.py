@@ -203,7 +203,17 @@ class CycleTracker:
     # ═══════════════════════════════════════════════════════
 
     def check_degradation(self) -> Optional[DegradationAlert]:
-        """检测是否发生退化，返回告警（如果有）。"""
+        """检测是否发生退化，返回告警（如果有）。
+
+        ★T2841：检测顺序按**严重度**排列——连续退化优先于单轮退化。
+
+        原顺序把「单轮下降」放在最前，导致「连续退化」**永远不可达**。严格证明：
+            要触发 consecutive，需三轮累计 a-c ≥ 10；
+            要避开 health_drop，需每轮降幅 a-b < 5 且 b-c < 5；
+            但 a-c = (a-b) + (b-c) < 5 + 5 = 10，与 a-c ≥ 10 矛盾。
+        也就是说只要累计降 10 点，中间必然有某轮降幅 ≥5 被 SINGLE_DROP 先拦截，
+        于是「连续退化 → 置 PAUSED → 停止自改进」这条保护链**从未生效过**。
+        """
         if len(self._snapshots) < 2:
             return None
 
@@ -211,13 +221,13 @@ class CycleTracker:
         if len(recent) < 2:
             return None
 
-        # 检测 1: 单轮健康评分大幅下降
-        alert = self._check_health_drop(recent)
+        # 检测 1: 连续退化（最严重，命中即置 PAUSED）
+        alert = self._check_consecutive_drop(recent)
         if alert:
             return alert
 
-        # 检测 2: 连续退化
-        alert = self._check_consecutive_drop(recent)
+        # 检测 2: 单轮健康评分大幅下降
+        alert = self._check_health_drop(recent)
         if alert:
             return alert
 

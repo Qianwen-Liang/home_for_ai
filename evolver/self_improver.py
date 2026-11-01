@@ -794,13 +794,17 @@ class SelfImprover:
         for i in range(max_cycles):
             # 每轮之前检查退化
             if tracker and i > 0:
+                # ★T2841：必须先检测退化（可能把状态置为 PAUSED），再判断是否暂停。
+                # 原顺序相反——should_pause() 读到的 status 永远是上一轮的，
+                # 于是"连续退化触发暂停"要等下一轮才生效：系统会**多跑一轮带病改进**。
+                alert = tracker.check_degradation()
+
                 should_pause, reason = tracker.should_pause()
                 if should_pause:
                     stopped_early = True
                     stop_reason = reason
                     break
 
-                alert = tracker.check_degradation()
                 if alert and alert.severity in ("critical", "high") and stop_on_degradation:
                     stopped_early = True
                     stop_reason = f"退化告警: {alert.description[:150]}"

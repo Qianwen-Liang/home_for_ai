@@ -5272,5 +5272,29 @@
       "lesson",
       "benchmark"
     ]
+  },
+  "K1793525522": {
+    "id": "K1793525522",
+    "title": "两项修复：效果评估口径改用p95；补上G2抓到的知识库并发锁",
+    "content": "【T2840 两项修复：effect_evaluator 口径 + knowledge_store 并发锁】\n\n【A. effect_evaluator：用均值差衡量改进 = 用错的统计量】\n问题：`perf_delta = before.avg - after.avg`。均值被长尾主导，\n这个差值实际反映\"期间有几次超时\"，而非\"命令变快了多少\"。\n★更隐蔽的一层：**评分逻辑里又独立算了一遍均值差**，所以即使改了 delta 口径，\n  评分仍被长尾支配 —— 改口径却没改判定，等于白改。\n修复：\n  1. MetricSnapshot 增加 p95_ms（取最慢工具 p95，与 health_dashboard 同口径）\n  2. perf_delta 优先用 p95，加 perf_basis 字段标明口径\n  3. 评分改为消费同一个 perf_delta_ms（不再自己算）\n验证：构造均值几乎不变（100→99）但 p95 从 30s 降到 1s → 判定为改进 ✓\n反向：p95 不变而均值从 3000 降到 10 → 不再被误判为改进 ✓\n\n【B. knowledge_store 并发锁：G2 门禁抓到的潜伏竞态】\nG2 报错：`dictionary changed size during iteration`\n根因：线程 A 在 `_save()` 里 `json.dumps(self._data)` 迭代字典，\n     线程 B 同时在 `store()` 里插入新条目 —— **本模块此前完全没有锁**。\n★两处都要加锁，缺一不可：\n  只给 _save 加锁不够——`self._data[entry_id] = ...` 在锁外时，\n  另一线程的 save 照样会看到尺寸变化。\n修复：RLock（可重入，因为 store 持锁后还会调同样加锁的 _save），\n  store 的「生成 id + 写入 dict + save」整段持锁。\n验证：连续 12 次 G2 零失败 + 7 个回归测试（并发写/读写混合/不丢数据/静态检查锁存在）\n\n【★方法论：这次是门禁抓到了我自己的 bug】\nG2 是我自己写的门禁，它抓到了我自己 B0 改造可能引入的并发缺陷。\n这比人读代码可靠——竞态是时序相关的，读代码看不出来。\n**投入建门禁的回报，在它开始抓到你自己的错误时才真正显现。**\n\n【另一个反复出现的问题】\n测试依赖环境状态（G4 自检跑真实测量，全量时 CPU 负载导致 CV 超阈值→跳过判定→随机失败）。\n已将 G4 自检改为注入固定测量值。**判定逻辑的测试不该依赖环境。**",
+    "category": "experience",
+    "tags": [
+      "effect_evaluator",
+      "perf_basis",
+      "并发锁",
+      "RLock",
+      "dictionary changed size",
+      "门禁抓到自己的bug"
+    ],
+    "source": "",
+    "created_at": 1793525522.6828246,
+    "updated_at": 1793525522.6828246,
+    "version": 1,
+    "kind": "procedural",
+    "semantic_tags": [
+      "method",
+      "lesson",
+      "boundary"
+    ]
   }
 }
