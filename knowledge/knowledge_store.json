@@ -5038,5 +5038,31 @@
       "lesson",
       "governance"
     ]
+  },
+  "K1793503969": {
+    "id": "K1793503969",
+    "title": "flaky 根因：Windows time_ns() 分辨率 15.6ms，三层缺陷叠加",
+    "content": "【T2830 flaky 根因：Windows time_ns() 分辨率约 15.6ms，不是纳秒】\n\n【现象】test_restore_completed_workflow 等测试全量跑偶发失败（实测 6 次跑 3 次失败 = 50%），单文件跑通过。\n初始判断\"测试顺序污染\"，加了完整隔离 fixture（tmp_path）后失败率只从 50% 降到 20%，未根除。\n\n【三层缺陷，逐层剥离才见底】\n层1 read 缓存失效不可靠\n  FileBackend 的 _read_json_cached 只按 mtime 判断缓存有效性。\n  NTFS mtime 精度粗，同一秒内对同一路径覆盖写 → mtime 不变 → 读到旧内容。\n  修复：save 后主动 `_JSON_CACHE.pop(path)`；list() 干脆不走缓存（每任务≤10个文件，直接读）。\n\n层2 排序依据是 mtime，无法区分同一时钟滴答内的多个文件\n  list() 用 st_mtime 倒序取\"最新\"，同一秒内多个 checkpoint 无法定序。\n  修复：改用内容里的 created_at_ns 排序，mtime_ns 与文件名兜底。\n\n层3（真正根因）Windows 上 time.time_ns() 根本不是纳秒\n  实测：连续 12 次 time_ns() 调用返回**1 个唯一值**（分辨率约 15.6ms）。\n  所以第 2 层加的纳秒序号也无法区分——诊断输出显示两个 checkpoint 的\n  created_at_ns 完全相同：1793503510627334100。\n  修复：进程内严格单调递增序号（同值则 +1，加锁）。\n\n【验证】\n修复前：6 次跑 3 次失败\n修复后：单文件 10/10 通过；auto+backend 组合 5/5 通过；全量 709 passed\n\n【方法论教训】\n1. **\"偶发失败\"往往不是随机，是\"确定性缺陷 + 时机巧合\"**。\n   50% 失败率已经足够高，应该立刻怀疑确定性 bug 而非\"环境抖动\"。\n2. **不要用\"加测试隔离\"掩盖实现缺陷**。我先加 fixture 隔离，把失败率从 50% 压到 20%，\n   看起来\"改善了\"——但根因在实现里，隔离只是让它更难复现。\n3. **平台相关的精度假设必须实测**。`time_ns()` 名字里有 ns，不代表分辨率是 ns。\n   实测一行代码（连续调用看唯一值数量）就能避免这次三层返工。\n4. 诊断信息要打印**排序键本身**（created_at_ns），而不是只打印\"期望 vs 实际\"。\n   正是看到两个 checkpoint 的 ns 完全相同，才定位到根因。",
+    "category": "lesson",
+    "tags": [
+      "flaky",
+      "time_ns精度",
+      "Windows",
+      "排序",
+      "缓存失效",
+      "checkpoint",
+      "根因定位"
+    ],
+    "source": "",
+    "created_at": 1793503969.373715,
+    "updated_at": 1793503969.373715,
+    "version": 1,
+    "kind": "boundary",
+    "semantic_tags": [
+      "pitfall",
+      "boundary",
+      "method",
+      "lesson"
+    ]
   }
 }
