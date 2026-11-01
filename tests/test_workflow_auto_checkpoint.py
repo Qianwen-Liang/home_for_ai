@@ -21,6 +21,38 @@ from tools.workflow_engine import (
 )
 from tools.checkpoint_manager import CheckpointManager
 
+import pytest
+
+
+# ── 存储隔离（★T2830）────────────────────────────────────
+# 本文件此前直接读写生产路径 memory/workflows.json 与 memory/checkpoints，
+# 导致全量测试时与其他文件互相干扰：单跑稳定通过、全量偶发失败。
+# 现改为每个测试独立临时目录，从根上消除顺序依赖。
+#
+# 注意两个易漏点：
+#   1. `from tools.workflow_engine import WORKFLOW_FILE` 是**值拷贝**，
+#      patch 模块属性管不到本文件的这个名字，必须同时 patch 本模块的引用。
+#   2. execute_workflow_tool 内部用全局单例 _engine，需一并重建。
+
+@pytest.fixture(autouse=True)
+def _isolate_workflow_storage(monkeypatch, tmp_path):
+    import sys as _sys
+
+    import tools.workflow_engine as _W
+    from tools.checkpoint_backend import FileBackend
+
+    wf = tmp_path / "workflows.json"
+    monkeypatch.setattr(_W, "WORKFLOW_FILE", wf)
+    monkeypatch.setattr(
+        _W, "CheckpointManager",
+        lambda: CheckpointManager(backend=FileBackend(tmp_path / "ckpt")),
+    )
+    # 本模块内 from-import 得到的副本
+    monkeypatch.setattr(_sys.modules[__name__], "WORKFLOW_FILE", wf)
+    # 全局单例按隔离配置重建
+    monkeypatch.setattr(_W, "_engine", _W.WorkflowEngine(auto_checkpoint=False))
+    return tmp_path
+
 
 def _extract_instance_id(result: str) -> str:
     """从 start 结果中提取 instance_id。"""

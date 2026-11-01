@@ -173,6 +173,13 @@ class FileBackend(StorageBackend):
             )
         except (OSError, UnicodeError) as exc:
             raise IOError(f"检查点保存失败: {exc}") from exc
+        # ★T2830 关键修复：写入后**主动失效**读缓存。
+        # 原实现只按 mtime 判断缓存是否有效，而 Windows 文件系统 mtime 精度较粗
+        # （秒级）。同一秒内对同一路径覆盖写时 mtime 不变，load 会返回**旧内容**。
+        # 实际后果：workflow 的 start() 与多次 step() 常在同一秒内完成，
+        # restore() 于是读到 start 时的「运行中」状态而非最终状态，
+        # 表现为 50% 概率的 flaky（实测 6 次跑 3 次失败）。
+        _JSON_CACHE.pop(str(cp_file), None)
         return cp_id
 
     def load(self, checkpoint_id: str) -> dict[str, Any]:
@@ -188,26 +195,37 @@ class FileBackend(StorageBackend):
         if not self._dir.is_dir():
             return []
 
-        checkpoints = []
-        for cp_file in sorted(
-            self._dir.glob("cp_*.json"),
-            key=lambda p: p.stat().st_mtime,
-            reverse=True,
-        ):
+        rows: list[tuple[int, int, str, dict[str, Any]]] = []
+        for cp_file in self._dir.glob("cp_*.json"):
             try:
-                data = _read_json_cached(cp_file)
+                # ★T2830：list() 不走 _read_json_cached。
+                # 每任务最多保留 10 个检查点，直接读文件的成本可忽略；
+                # 而缓存曾导致"同一秒内覆盖写后读到旧内容"的 50% flaky。
+                # 这里彻底排除该因素——排序要求"绝对最新"，不容缓存干扰。
+                data = json.loads(cp_file.read_text(encoding="utf-8"))
                 if task_id and data.get("task_id") != task_id:
                     continue
-                checkpoints.append({
-                    "checkpoint_id": data.get("checkpoint_id", cp_file.stem),
-                    "task_id": data.get("task_id", ""),
-                    "phase": data.get("phase", ""),
-                    "created_at": data.get("created_at", ""),
-                    "state_size": len(json.dumps(data.get("state", {}))),
-                })
+                rows.append((
+                    # ★T2830：优先用内容里的纳秒序号排序。
+                    # 原实现只按文件 mtime 倒序取「最新」，但同一秒内连续 save
+                    # 的多个检查点 mtime 相同，排序结果不确定 → restore() 可能
+                    # 取到中间状态的旧检查点（实测 50% flaky）。
+                    # 三级兜底：纳秒序号 → mtime_ns → 文件名（保证确定性）。
+                    int(data.get("created_at_ns", 0)),
+                    cp_file.stat().st_mtime_ns,
+                    cp_file.name,
+                    {
+                        "checkpoint_id": data.get("checkpoint_id", cp_file.stem),
+                        "task_id": data.get("task_id", ""),
+                        "phase": data.get("phase", ""),
+                        "created_at": data.get("created_at", ""),
+                        "state_size": len(json.dumps(data.get("state", {}))),
+                    },
+                ))
             except (json.JSONDecodeError, OSError):
                 continue
-        return checkpoints
+        rows.sort(key=lambda r: (r[0], r[1], r[2]), reverse=True)
+        return [r[3] for r in rows]
 
     def delete_task(self, task_id: str) -> int:
         deleted = 0

@@ -35,6 +35,7 @@ v2.0 新增：
 from __future__ import annotations
 
 import json
+import threading
 import time
 import uuid
 from datetime import datetime
@@ -42,6 +43,25 @@ from pathlib import Path
 from typing import Any
 
 from .checkpoint_backend import FileBackend, StorageBackend
+
+# ── 严格单调递增序号（★T2830）────────────────────────────
+# Windows 上 time.time_ns() 的实际分辨率约 15.6ms，连续调用常返回**完全相同**的值
+# （实测 12 次调用得到 1 个唯一值）。用它给检查点排序会导致同一时钟滴答内
+# 创建的多个检查点无法区分先后 → restore() 取到旧状态 → 50% flaky。
+# 这里在进程内保证严格递增，同值则 +1。
+_SEQ_LOCK = threading.Lock()
+_LAST_SEQ = 0
+
+
+def _next_sequence() -> int:
+    """返回严格单调递增的时间序号（进程内）。"""
+    global _LAST_SEQ
+    with _SEQ_LOCK:
+        value = time.time_ns()
+        if value <= _LAST_SEQ:
+            value = _LAST_SEQ + 1
+        _LAST_SEQ = value
+        return value
 
 SANDBOX_DIR = Path(__file__).resolve().parent.parent
 
@@ -103,6 +123,12 @@ class CheckpointManager:
             "task_id": task_id,
             "phase": phase,
             "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            # ★T2830：纳秒单调序号。原 list() 依赖文件 mtime 排序取"最新"，
+            # 而同一秒内连续 save 的多个检查点 mtime 相同 → 排序不确定 →
+            # restore() 可能取到中间状态的旧检查点（实测 50% flaky）。
+            # ★T2830：用严格单调递增序号。time.time_ns() 在 Windows 上
+            # 分辨率约 15.6ms，连续调用返回相同值，无法区分先后。
+            "created_at_ns": _next_sequence(),
             "metadata": metadata or {},
             "state": state,
         }
