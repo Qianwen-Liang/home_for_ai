@@ -5087,5 +5087,28 @@
       "benchmark",
       "lesson"
     ]
+  },
+  "K1793511534": {
+    "id": "K1793511534",
+    "title": "agent_manager：心跳只记不判，导致崩溃 agent 仍被派活",
+    "content": "【T2832 agent_manager：心跳\"只记不判\"的缺陷】\n\n【缺陷】heartbeat() 更新 last_heartbeat，但**没有任何地方判定它是否过期**。\n三层后果：\n1. report 明细层：`\"✅ 健康\" if agent.last_heartbeat else \"❌ 无心跳\"`\n   → 只要曾经发过心跳就永远显示健康，**一年前的也显示\"✅ 健康\"**\n2. report 汇总层却按\"5 分钟内\"统计 healthy_heartbeats —— **两层口径不一致**\n3. 崩溃的 Agent 状态永远停在 busy/idle：\n   - discover 只排除 OFFLINE 状态 → 仍会被发现为\"可用\"\n   - assign_task 只检查 busy/offline → 仍会把任务派给已崩溃实例\n\n【外部依据】服务注册中心（Consul / etcd lease）都以 TTL 判定健康，\n超时即视为不可用并从可调度集合中摘除。我们的实现只学了\"上报心跳\"，没学\"判定超时\"。\n\n【修复】\n1. `HEARTBEAT_TTL_SECONDS = 300`，与 report 汇总层口径一致\n2. `is_stale(agent)`：\n   - last_heartbeat 为空 → False（不误杀尚未上报的新实例）\n   - 解析失败 → True（保守）\n   - 超 TTL → True\n3. 接入三处：report 明细显示\"⚠️ 心跳过期（最后 …）\"、\n   discover 排除 stale、assign_task 拒绝并说明最后一次心跳时间\n\n【测试】14 个用例锁定：无心跳/新鲜/过期/一年前/时间格式损坏、\nreport 两层口径一致、discover 排除与包含、assign_task 拒绝与放行\n\n【方法论】\n**\"记录\"和\"判定\"是两件事。** 有字段、有写入、有展示，不等于有语义。\n判定一个机制是否真的生效，要看它的输出**是否会影响行为**——\n这里的 last_heartbeat 被写入、被展示，却从未影响任何调度决策，\n所以它实际上只是个装饰性字段。\n这和\"知识库只积不用\"\"能力注册了不被调\"是同一类问题的第三种形态：\n**状态记录了但不参与判断**。",
+    "category": "experience",
+    "tags": [
+      "agent_manager",
+      "心跳TTL",
+      "健康判定",
+      "记录vs判定",
+      "装饰性字段"
+    ],
+    "source": "",
+    "created_at": 1793511534.3420393,
+    "updated_at": 1793511534.3420393,
+    "version": 1,
+    "kind": "procedural",
+    "semantic_tags": [
+      "method",
+      "lesson",
+      "boundary"
+    ]
   }
 }

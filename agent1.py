@@ -952,10 +952,14 @@ def execute_model_tool_call(
         # 按类别桥接 safety_net：
         #   REJECTED  = 业务拒绝，交模型自纠 → 记 tool_call
         #   RETRYABLE / FATAL = 系统性问题 → 记 error，供安全网感知
+        # ★T2833：原来只 record_event，check() 从不被调用——检测规则形同虚设。
+        # 现改用 record_and_check：触发阈值时把告警附加到工具结果，让模型看见并自纠。
         try:
             _kind = "tool_call" if _ev.category.value == "REJECTED" else "error"
-            tool_safety._safety.record_event(
+            _alert = tool_safety._safety.record_and_check(
                 _kind, f"[{_ev.category.value}] {exc}", name)
+            if _alert:
+                result = f"{result}\n\n🛡️ 安全网告警：\n{_alert}"
         except Exception:
             pass  # safety_net 不可用时静默忽略
 

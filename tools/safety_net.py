@@ -205,6 +205,29 @@ class SafetyNet:
         self._save()
         return f"已记录 {event_type} 事件"
 
+    def record_and_check(self, event_type: str = "other", event_detail: str = "",
+                         tool_name: str = "") -> str:
+        """记录事件，并在触发危险阈值时返回告警文本（否则返回空串）。
+
+        ★T2833：原实现里 record_event 被 agent1 调用、check() 却从未被调用——
+        检测规则（连续错误 / 重复错误 / 工具循环）全部存在，却从不执行，
+        等于安全网只记录不判断。本方法把两者接起来，调用方一行即可。
+
+        只在发现**严重问题**（🚨）时返回内容，避免普通警告刷屏。
+        返回的告警由调用方附加到工具结果里，让模型能看见并自我纠正
+        （对齐 MCP SEP-1303：错误信息必须进入模型上下文）。
+        """
+        self.record_event(event_type, event_detail, tool_name)
+        try:
+            report = self.check()
+        except Exception:  # noqa: BLE001  检测失败不应影响主流程
+            return ""
+        if "🚨" not in report:
+            return ""
+        # 只取问题摘要段，避免把整份报告塞进工具结果
+        lines = [ln for ln in report.splitlines() if ln.strip().startswith(("🔴", "🟡", "🚨"))]
+        return "\n".join(lines)
+
     def check(self) -> str:
         """检查当前状态，检测是否陷入循环或异常。"""
         now = time.time()
