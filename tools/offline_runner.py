@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import json
 import time
+import uuid
 import urllib.request
 import urllib.error
 from dataclasses import dataclass, field
@@ -56,7 +57,7 @@ class OfflineTask:
     title: str
     description: str
     params: dict[str, Any] = field(default_factory=dict)
-    status: str = "pending"  # pending | running | paused | done | failed
+    status: str = "pending"  # pending | running | paused | done | failed | cancelled
     progress: float = 0.0    # 0.0 ~ 1.0
     current_phase: str = ""
     phases: list[str] = field(default_factory=list)
@@ -484,7 +485,11 @@ class OfflineTaskManager:
                         f"\n使用 offline action=status task_id={existing_task_id} 查看详情"
                     )
 
-        task_id = f"OT-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        # ★T2837：task_id 原为秒级时间戳 `OT-{yyyymmddHHMMSS}`，
+        # 同一秒内提交两个任务会得到**相同 ID** → 后者静默覆盖前者（数据丢失）。
+        # 这是本项目第三次遇到同一根因（checkpoint 排序、知识库 ID 冲突）。
+        # 加 uuid 后缀保证唯一。
+        task_id = f"OT-{datetime.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6]}"
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         task = OfflineTask(
@@ -539,6 +544,13 @@ class OfflineTaskManager:
 
         if task.status == "running":
             return f"⚠️ 任务 '{task_id}' 正在执行中"
+
+        # ★T2837：原实现只拦截 running，导致 done / cancelled 的任务可被
+        # 重新执行，已完成的结果会被覆盖。终态必须显式拦截。
+        if task.status == "cancelled":
+            return f"⚠️ 任务 '{task_id}' 已取消（终态），无法执行；如需重跑请重新提交"
+        if task.status == "done":
+            return f"⚠️ 任务 '{task_id}' 已完成（终态），如需重跑请重新提交"
 
         task.status = "running"
         task.updated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -791,18 +803,22 @@ class OfflineTaskManager:
         if task.status != "paused":
             return f"⚠️ 任务 '{task_id}' 状态为 '{task.status}'，无法恢复"
 
-        task.status = "running"
+        # ★T2837：原实现把状态设为 "running"，但 execute() 会拦截 running
+        # （"正在执行中"）——于是 pause → resume → execute 这条路径**永久卡死**，
+        # 任务停在 running 再也无法推进。resume 的语义是"回到可执行状态"，
+        # 而当前实现本来也是从 phases 开头重跑，因此设为 pending 才自洽。
+        task.status = "pending"
         task.updated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self._save_task(task)
 
         return (
-            f"▶️ 任务 '{task_id}' 已恢复\n"
+            f"▶️ 任务 '{task_id}' 已恢复（待执行）\n"
             f"   当前阶段: {task.current_phase}\n"
             f"   使用 offline action=execute task_id={task_id} 继续执行"
         )
 
     def cancel(self, task_id: str) -> str:
-        """取消任务。"""
+        """取消任务（终态，不可恢复）。"""
         task = self._tasks.get(task_id)
         if not task:
             raise OfflineError(f"未找到任务: '{task_id}'")
@@ -810,7 +826,11 @@ class OfflineTaskManager:
         if task.status == "done":
             return f"⚠️ 任务 '{task_id}' 已完成，无法取消"
 
-        task.status = "paused"
+        # ★T2837：原实现把状态设为 "paused"，但返回文案说「已取消」——
+        # 于是「取消」实际等于「暂停」，用户仍可用 resume 把任务捡回来。
+        # 取消是终态，必须与暂停区分，否则是语义欺骗。
+        task.status = "cancelled"
+        task.updated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self._save_task(task)
         return f"🛑 任务 '{task_id}' 已取消"
 

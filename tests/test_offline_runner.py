@@ -219,7 +219,9 @@ def test_pause_resume():
     # 恢复
     result = mgr.resume(task_id)
     assert "已恢复" in result
-    assert mgr._tasks[task_id].status == "running"
+    # ★T2837：原实现 resume 后设为 "running"，但 execute() 会拦截 running，
+    # 导致 pause→resume→execute 永久卡死。现改为回到 "pending"（可执行状态）。
+    assert mgr._tasks[task_id].status == "pending"
 
     # 暂停非运行中任务
     mgr._tasks[task_id].status = "done"
