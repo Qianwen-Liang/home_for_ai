@@ -5321,5 +5321,28 @@
       "method",
       "lesson"
     ]
+  },
+  "K1793536477": {
+    "id": "K1793536477",
+    "title": "audit_log：94条记录只写不读，可追溯性无消费者",
+    "content": "【T2842 audit_log：只写不读的\"可追溯性\"】\n\n【缺陷】\naudit_log 的 docstring 写着三条设计原则：不可变性 / 完整性 / **可追溯**。\n写入侧完全正常：self_healing 与 self_improver 持续调 log + update_outcome，\n实测已累积 **94 条**审计记录。\n\n但**没有任何消费者**：\n- query / report / stats 只服务工具接口\n- 而 audit_log 工具在 LEGACY_TOOLS 中 → LLM 看不见\n- 外部代码只 import `_audit` 用于写\n\n→ **\"可追溯的进化历史\"实际无人追溯。**\n\n【修复】不恢复工具注册（schema 预算已用到 3,155/3,500，余量不足），\n而是把审计摘要并入 `run_multi_cycles` 的返回：\n```python\n\"audit_trail\": _recent_audit_trail()\n```\n零 schema 成本，每轮改进循环结束即可回看历史决策。\n\n【一个细节：只报\"最近 0 条\"会误导】\n首版只返回 recent_count，实测 recent=0 而总量=94 ——\n会被读成\"根本没有审计记录\"。改为同时返回 `total_entries`。\n\n**指标必须能自我解释**：一个\"0\"的含义取决于分母。\n\n【顺带发现的文档夸大】\ndocstring 承诺「不可变性：已记录的条目不可修改」，\n但 `update_outcome` 会直接改写 outcome / actual_effect / health_after / effect_score。\n准确表述应是「**决策内容**不可改，**结果字段**可事后补填」。\n这类\"术语夸大\"不造成功能缺陷，但会误导使用者对数据可靠性的判断。\n\n【第 N 次遇到\"只积不用\"】\n- 知识库 236 条：只积不用\n- 边界卡片注入：挂在从不被调的 advise 上\n- decision_engine：被移出注册表\n- safety_net：record 有、check 无\n- **audit_log：94 条记录从未被读**\n共性判据仍是同一句：**这份数据的输出，会影响任何后续行为吗？**",
+    "category": "experience",
+    "tags": [
+      "audit_log",
+      "只写不读",
+      "可追溯性",
+      "指标自我解释",
+      "文档夸大"
+    ],
+    "source": "",
+    "created_at": 1793536477.8880472,
+    "updated_at": 1793536477.8880472,
+    "version": 1,
+    "kind": "procedural",
+    "semantic_tags": [
+      "method",
+      "lesson",
+      "boundary"
+    ]
   }
 }
