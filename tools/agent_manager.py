@@ -273,10 +273,34 @@ class AgentManager:
     支持按能力发现 Agent，为任务调度提供基础。
     """
 
+    # ★T2832：心跳有效期。原实现只记录 last_heartbeat 却从不判定是否过期——
+    # report 的汇总层按"5 分钟内"算健康数，明细层却只要有过心跳就报「✅ 健康」，
+    # 一年前的心跳也显示健康；且崩溃的 Agent 状态永远停在 busy/idle，
+    # 仍会被 discover 发现、被 assign_task 分配任务。
+    HEARTBEAT_TTL_SECONDS = 300
+
     def __init__(self) -> None:
         self._agents: dict[str, AgentRegistration] = {}
         self._task_records: list[AgentTaskRecord] = []
         self._load()
+
+    # ── 心跳新鲜度（★T2832）────────────────────────────
+
+    def is_stale(self, agent: AgentRegistration) -> bool:
+        """心跳是否已过期。
+
+        判定口径与 report() 汇总层保持一致（默认 5 分钟）：
+          - 无心跳记录 → 不算过期（新注册的 Agent 可能尚未发过心跳，避免误杀）
+          - 有心跳但超过 TTL → 过期
+        """
+        if not agent.last_heartbeat:
+            return False
+        try:
+            hb_time = datetime.strptime(agent.last_heartbeat, "%Y-%m-%d %H:%M:%S")
+        except (ValueError, TypeError):
+            return True          # 时间格式损坏，按过期处理（保守）
+        return (datetime.now() - hb_time).total_seconds() > self.HEARTBEAT_TTL_SECONDS
+
 
     # ── 持久化 ──────────────────────────────────────────
 
@@ -440,6 +464,8 @@ class AgentManager:
             agent for agent in self._agents.values()
             if capability in agent.capabilities
             and agent.status != AgentStatus.OFFLINE.value
+            # ★T2832：排除心跳过期的 Agent，否则会把任务派给已崩溃的实例
+            and not self.is_stale(agent)
         ]
 
         if not matching:
@@ -600,6 +626,12 @@ class AgentManager:
 
         if agent.status == AgentStatus.OFFLINE.value:
             return f"⚠️ Agent '{agent.name}' ({agent_id}) 当前离线"
+        # ★T2832：心跳过期说明实例可能已崩溃，不应再派发新任务
+        if self.is_stale(agent):
+            return (
+                f"⚠️ Agent '{agent.name}' ({agent_id}) 心跳已过期"
+                f"（最后 {agent.last_heartbeat}），疑似离线，请先确认存活再分配"
+            )
 
         # 生成任务 ID
         final_task_id = task_id.strip() or f"T{int(time.time())}"
@@ -789,8 +821,13 @@ class AgentManager:
                 if agent.current_task:
                     lines.append(f"     当前: {agent.current_task[:50]}")
 
-                # 心跳状态
-                hb_status = "✅ 健康" if agent.last_heartbeat else "❌ 无心跳"
+                # 心跳状态（★T2832：明细层与汇总层口径保持一致，都按 TTL 判定）
+                if not agent.last_heartbeat:
+                    hb_status = "❌ 无心跳"
+                elif self.is_stale(agent):
+                    hb_status = f"⚠️ 心跳过期（最后 {agent.last_heartbeat}）"
+                else:
+                    hb_status = "✅ 健康"
                 lines.append(f"     心跳: {hb_status}")
                 lines.append("")
 
