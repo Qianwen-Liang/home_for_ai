@@ -872,6 +872,7 @@ class SelfImprover:
                 if cycle_results else 0,
             "cycle_ids": [c.cycle_id for c in cycle_results],
             "distillation": distillation,
+            "audit_trail": _recent_audit_trail(),
             "tracker_status": tracker.status_summary() if tracker else "N/A",
         }
 
@@ -1035,6 +1036,46 @@ class SelfImprover:
 # ── 全局单例 ───────────────────────────────────────────────
 
 _improver = SelfImprover()
+
+
+def _recent_audit_trail(days: int = 1, limit: int = 5) -> dict:
+    """读取最近审计记录摘要（★T2842）。
+
+    audit_log 长期**只写不读**：self_healing / self_improver 调 log 与
+    update_outcome 持续累积（实测 94 条），但 query/report/stats 仅服务
+    工具接口，而该工具在 LEGACY_TOOLS 中，LLM 看不见。
+    「可追溯的进化历史」因此形同虚设。
+
+    本函数把摘要并入多轮改进总结，使每轮循环结束时都能回看决策，
+    且不增加任何工具 schema 成本（当前 3,155 / 预算 3,500 tokens）。
+    """
+    try:
+        from evolver.audit_log import _audit
+
+        trail = _audit.query(days=days)
+        if not isinstance(trail, list):
+            return {"error": f"query 返回类型异常: {type(trail).__name__}"}
+        try:
+            total = len(_audit._entries)
+        except Exception:  # noqa: BLE001
+            total = -1
+        return {
+            "recent_days": days,
+            # ★同时给出总量：只报「最近 0 条」会被误读成「没有审计记录」，
+            # 而实际可能只是近期没有新决策（实测 94 条历史记录、近期 0 条）。
+            "recent_count": len(trail),
+            "total_entries": total,
+            "entries": [
+                {
+                    "id": getattr(e, "entry_id", ""),
+                    "decision": str(getattr(e, "decision", ""))[:80],
+                    "outcome": getattr(getattr(e, "outcome", None), "value", ""),
+                }
+                for e in trail[-limit:]
+            ],
+        }
+    except Exception as exc:  # noqa: BLE001  审计不可用不应中断改进循环
+        return {"error": str(exc)}
 
 
 def get_improver() -> SelfImprover:

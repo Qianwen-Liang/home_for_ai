@@ -5296,5 +5296,30 @@
       "lesson",
       "boundary"
     ]
+  },
+  "K1793535417": {
+    "id": "K1793535417",
+    "title": "cycle_tracker：连续退化检测可证明不可达，保护链从未生效",
+    "content": "【T2841 cycle_tracker：两处缺陷，其中一处可用算术证明不可达】\n\n【缺陷1：连续退化检测永远不可达（可证明）】\n`check_degradation` 的顺序是「单轮检测 → 连续检测」，两者都命中即 return。\n- 触发 consecutive 需：三轮累计降幅 a-c ≥ 10（HEALTH_DROP_THRESHOLD×2）\n- 避开 single 需：每轮降幅 a-b < 5 且 b-c < 5\n- 但 a-c = (a-b) + (b-c) < 5 + 5 = 10，与 a-c ≥ 10 **矛盾**\n\n即：只要累计降够 10，中间必然有一轮降幅 ≥5 被 SINGLE_DROP 先拦截。\n**「连续退化 → 置 PAUSED → 停止自改进」这条保护链从未生效过。**\n修复：检测顺序按严重度排列，consecutive 先于 single。\n\n【缺陷2：暂停判断慢一拍】\nself_improver 里顺序相反：\n```python\nshould_pause = tracker.should_pause()   # 读到的 status 是上一轮的\nalert = tracker.check_degradation()     # 这里才置 PAUSED\n```\n后果：stop_on_degradation=False 时，系统会**多跑一轮带病改进**才停。\n修复：先 check_degradation 再 should_pause。\n\n【阈值不是拍脑袋】\n实测 health_score 连续 6 次测量均为 75（极差 0），噪声带为 0，\n阈值 HEALTH_DROP_THRESHOLD=5 有充足余量。\n\n【口径检查结论：此处无长尾问题】\nCycleSnapshot 虽记录 avg_response_ms，但**没有任何判定路径读它**\n（只用 health_score / rolled_back / verdict），所以 effect_evaluator 的均值问题不在此处重演。\n\n【方法论】\n1. **\"检测存在\"≠\"检测可达\"**。死代码不一定是没人调用，也可能是条件永不同时成立。\n   判别方法：把阈值条件写成不等式联立，看是否有解。\n2. **短路 return 的有序检测，顺序即优先级**。默认按代码书写顺序执行，\n   若把轻判据放在重判据前，重判据可能永远拿不到执行机会。\n3. 这是本项目的第七种失效形态：前六种是\"存在≠生效/报错≠恢复/声明≠实现\"等，\n   这一种是**\"检测逻辑自相矛盾，永远无法触发\"**。",
+    "category": "lesson",
+    "tags": [
+      "cycle_tracker",
+      "死代码",
+      "不可达检测",
+      "短路顺序",
+      "暂停慢一拍",
+      "阈值实测"
+    ],
+    "source": "",
+    "created_at": 1793535417.293397,
+    "updated_at": 1793535417.293397,
+    "version": 1,
+    "kind": "boundary",
+    "semantic_tags": [
+      "pitfall",
+      "boundary",
+      "method",
+      "lesson"
+    ]
   }
 }
