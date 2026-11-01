@@ -273,6 +273,30 @@ class Orchestrator:
         # Step 4: 收集结果
         collect_result = _dispatcher.collect(pipeline_id=pipeline_id)
 
+        # Step 4.5: ★T2836 有限次自动重试
+        # 文档承诺「失败重试：失败子任务自动重新分配」，但原实现只提示用户
+        # 手动 action=retry —— 自动重试并不存在。这里补上，且只重试一轮，
+        # 避免失败子任务无限循环；重试后仍失败则明确交回人工介入。
+        retry_note = ""
+        pipeline = _dispatcher._pipelines.get(pipeline_id)
+        if pipeline:
+            failed_now = [s for s in pipeline.subtasks if s.status in ("failed", "skipped")]
+            if failed_now:
+                try:
+                    self.retry(pipeline_id=pipeline_id)
+                    collect_result = _dispatcher.collect(pipeline_id=pipeline_id)
+                    still_failed = [
+                        s for s in _dispatcher._pipelines[pipeline_id].subtasks
+                        if s.status in ("failed", "skipped")
+                    ]
+                    retry_note = (
+                        f"已自动重试一轮，仍有 {len(still_failed)} 个子任务失败 —— 需人工介入"
+                        if still_failed else
+                        f"已自动重试一轮，{len(failed_now)} 个失败子任务已恢复"
+                    )
+                except Exception as exc:  # noqa: BLE001  重试失败不应中断整体编排
+                    retry_note = f"自动重试失败: {exc}"
+
         # Step 5: 汇总报告
         pipeline = _dispatcher._pipelines.get(pipeline_id)
         total = len(pipeline.subtasks) if pipeline else 0
@@ -286,6 +310,10 @@ class Orchestrator:
             f"🔢 流水线: [{pipeline_id}]",
             f"🤖 可用Agent: {len(ready)} 个",
             f"📊 子任务: {total} 个 | ✅ {done} 完成",
+        ]
+        if retry_note:
+            lines.append(f"🔁 {retry_note}")
+        lines += [
             f"",
             f"── 分解结果 ──",
             decompose_result,

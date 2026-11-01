@@ -5155,5 +5155,28 @@
       "lesson",
       "benchmark"
     ]
+  },
+  "K1793514731": {
+    "id": "K1793514731",
+    "title": "dispatcher 缺 Saga 补偿：失败后 Agent 永久卡 busy，报错≠恢复",
+    "content": "【T2835 task_dispatcher：缺少 Saga 补偿，失败后 Agent 永久卡在 busy】\n\n【缺陷】dispatch() 的执行顺序：\n  1. `_manager.assign_task(...)` → Agent 变 busy\n  2. subtask.status = ASSIGNED\n  3. self._save()\n  4. message_bus.send(...)\n  5. 返回成功\n\n只要 3/4/5 任一抛异常，原实现的 except 分支：\n```python\nexcept Exception as exc:\n    return f'❌ 调度失败: {exc}'    # 无任何补偿\n```\n→ **Agent 永久卡在 busy** → `_find_best_agent` 因 status 过滤再也不选它\n→ 多智能体协同中这个 Agent 就此\"消失\"，且没有任何告警\n\n【外部依据】Saga 模式：每个正向操作都要有对应补偿，失败时逆序执行补偿。\n\n【修复】\n在 except 分支加补偿（仅当子任务已到 ASSIGNED 才执行）：\n  - `_manager.task_failed(agent_id, task_id, error)` → Agent 回 idle + fail_count+1\n  - subtask 回 PENDING，清空 assigned_agent / started_at\n  - 返回信息注明\"已回滚 Agent 占用状态\"\n  - 补偿本身用 try/except 包裹：**补偿失败不得掩盖原始错误**（有测试覆盖）\n\n【验证】实测（memory/cmd_output/dispatch_saga.py）：\n  dispatch: ❌ 调度失败: 模拟写入失败（已回滚 Agent 占用状态）\n  Agent 状态 : idle      ← 不是 busy\n  fail_count: 1\n  子任务状态 : pending | assigned_agent: ''\n  并验证补偿后可**重新调度成功**（这才是回滚的真实意义，不是只有状态好看）\n\n【方法论】\n**\"失败返回错误\" ≠ \"状态已处理\"。** 只 report 不 compensate 的异常处理，\n会把一次局部失败扩展成永久性的能力损失。\n判断标准：异常发生后，**系统的其余部分还能正常工作吗？**\n如果不能（本例：Agent 再也不被选中），那就不是\"处理了异常\"，而是\"留下了残骸\"。\n\n【同一主题的第五种形态】\n前四种是\"存在≠生效\"（资产/能力/状态/传感器）。\n这一种是\"报错≠恢复\"——**错误被看见了，但破坏没有被修复**。\n两者共同点：都缺少\"闭环\"。",
+    "category": "experience",
+    "tags": [
+      "Saga补偿",
+      "脏状态",
+      "部分失败",
+      "task_dispatcher",
+      "报错不等于恢复"
+    ],
+    "source": "",
+    "created_at": 1793514731.904577,
+    "updated_at": 1793514731.904577,
+    "version": 1,
+    "kind": "boundary",
+    "semantic_tags": [
+      "pitfall",
+      "method",
+      "lesson"
+    ]
   }
 }
