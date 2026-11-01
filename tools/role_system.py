@@ -499,8 +499,14 @@ class RoleSystem:
 _role_system = RoleSystem()
 
 
-def execute_role_tool(arguments: dict[str, Any]) -> str:
-    """执行 role_system 工具。"""
+def execute_role_system_tool(arguments: dict[str, Any]) -> str:
+    """执行 role_system 工具。
+
+    ★T2828：原名 `execute_role_tool`，与项目约定 `execute_{tool_name}_tool` 不一致
+    （TOOL_DEFINITION.function.name = "role_system"），导致自动化的契约检查
+    把它报为「有 TOOL_DEFINITION 但无执行函数」。
+    实测该函数无任何外部调用方，改名零风险；旧名保留为别名以防遗漏。
+    """
     action = arguments.get("action", "")
     role = arguments.get("role", "")
     task = arguments.get("task", "")
@@ -538,7 +544,11 @@ def execute_role_tool(arguments: dict[str, Any]) -> str:
             return _role_system.reset()
 
         else:
-            return f"未知操作: {action}"
+            return f"❌ 未知操作: {action}"
 
     except RoleSystemError as exc:
-        return f"角色系统错误: {exc}"
+        return f"❌ 角色系统错误: {exc}"
+
+
+# ★T2828：向后兼容别名（旧名可能被外部脚本使用）
+execute_role_tool = execute_role_system_tool

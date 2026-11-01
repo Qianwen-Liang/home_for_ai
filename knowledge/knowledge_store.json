@@ -4966,5 +4966,29 @@
       "lesson",
       "governance"
     ]
+  },
+  "K1793462146": {
+    "id": "K1793462146",
+    "title": "循环导入与\"测试过时\"的辨析：假设被否证后的拆解",
+    "content": "【T2827 + F1/F2 关闭】一个循环导入和一个\"测试过时\"的辨析\n\n【第一件事：循环导入（确定缺陷）】\ntools/specialist_base.py:1491 有 `from .debugger_agent import DebuggerAgent`（模块级），\n而 debugger_agent.py:14 有 `from .specialist_base import (...)` —— 互导。\n后果：`import tools.debugger_agent` 直接 ImportError（partially initialized），\n但从 specialist_base 侧导入却能成功（基类已定义），所以主流程一直没坏。\n\n修复：删除模块级导入（纯冗余），三处调用方改为从 tools.debugger_agent 直接导入。\n关键证据：registry 里早已标注 `\"debugger\": None  # 延迟加载`，\n且 specialist_base 内部 1189/1241 行已用函数内导入——模块级那行是历史遗留。\n\n【第二件事：F1/F2 不是实现缺陷，是测试过时】\n最初怀疑循环导入是 F1/F2 的根源——**修完后仍然失败**，假设被否证。\n真实原因：测试断言 `output[\"fix_actions\"]` 非空，但 `_execute_auto_fix` 从不返回该字段。\n判断\"哪边对\"的依据是实现自洽性：\n  fixed=False + routing={auto_repair, self_healing} + message=\"真正的修复由引擎执行\"\n三者一致指向设计意图是「诊断 + 路由」，而 docstring 和测试还停留在「自己执行修复」的旧设计。\n处理：更新 docstring + 改写测试断言（改为校验 suggestions 与 routing），而非硬加一个语义模糊的 fix_actions 字段。\n  理由：加字段会掩盖\"Debugger 不执行修复\"这个事实。\n\n【结果】\n全量 687 passed / 0 failed —— 项目首次零失败\nG3 中 F1/F2 从\"已接受失败\"消失，CI 的 deselect 自动失效（test_audit 从登记表读取）\n\n【方法论】\n1. **假设要能被打脸**。我怀疑循环导入是 F1/F2 根源，修完却没用——这个否证本身有价值，\n   它把\"两个独立缺陷\"从\"一个\"里拆了出来。\n2. **测试失败时先问\"哪边在变化\"**。实现有三个字段互相印证设计意图，测试只认一个字段，\n   说明测试滞后于实现，而不是实现退化。\n3. **不要用\"加兼容字段\"的方式让测试变绿**。那会把设计变更掩盖成偶然，\n   下次还会有人踩到同样的困惑。",
+    "category": "lesson",
+    "tags": [
+      "循环导入",
+      "测试过时",
+      "设计演进",
+      "否证",
+      "fix_actions",
+      "首次零失败"
+    ],
+    "source": "",
+    "created_at": 1793462146.8599875,
+    "updated_at": 1793462146.8599875,
+    "version": 1,
+    "kind": "boundary",
+    "semantic_tags": [
+      "pitfall",
+      "boundary",
+      "method"
+    ]
   }
 }

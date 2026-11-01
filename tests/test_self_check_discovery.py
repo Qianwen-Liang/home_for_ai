@@ -82,27 +82,50 @@ def test_tool_module_with_definition_is_ok() -> None:
     assert all(r["status"] == "✅" for r in checker.results)
 
 
-def test_missing_execute_function_warns() -> None:
-    """有 TOOL_DEFINITION 但无执行函数 → 必须警告（当前 role_system 即此情况）。"""
-    checker = HealthCheck()
-    checker.results = []
-    checker._check_tools_module("role_system", None)
-    statuses = [r["status"] for r in checker.results]
-    assert "⚠️" in statuses, "契约不完整应产生警告"
+def test_missing_execute_function_warns(tmp_path) -> None:
+    """有 TOOL_DEFINITION 但无执行函数的模块必须被标警告。
+
+    ★注意：这里用**人造模块**而非真实模块。
+    原测试写死 role_system（当时它确实缺执行函数），一旦修好测试就失效——
+    那种写法锁定的是"当前的 bug 状态"，而不是"检查逻辑是否正确"。
+    """
+    tools_dir = ROOT / "tools"
+    fake = tools_dir / "_tmp_broken_contract.py"
+    fake.write_text(
+        'TOOL_DEFINITION = {"type": "function", "function": {"name": "_tmp_broken_contract"}}\n',
+        encoding="utf-8",
+    )
+    try:
+        checker = HealthCheck()
+        checker.results = []
+        checker._check_tools_module("_tmp_broken_contract", None)
+        statuses = [r["status"] for r in checker.results]
+        assert "⚠️" in statuses, f"契约不完整应产生警告，实际: {checker.results}"
+    finally:
+        fake.unlink(missing_ok=True)
+        sys.modules.pop("tools._tmp_broken_contract", None)
 
 
 # ── 4. 健康状态诚实反映问题 ─────────────────────────────
 
-def test_health_is_not_falsely_green() -> None:
+def test_health_is_not_falsely_green(monkeypatch) -> None:
     """存在导入失败时，健康状态不得为「优」。
 
-    这是本次改造的核心：旧版在只覆盖 23% 的情况下报「🟢 优」。
-    debugger_agent 当前存在循环导入，因此必须体现为问题。
+    ★注意：用人造场景（注入一个不存在的模块）而非依赖真实缺陷。
+    原测试依赖 debugger_agent 当时的循环导入，修好后即失效。
+    这里直接验证判定逻辑本身。
     """
-    out = execute_self_check_tool({"scope": "tools"})
-    has_failure = "❌" in out
-    if has_failure:
-        assert "🟢 优" not in out, "存在失败项却报告健康状态为优"
+    checker = HealthCheck()
+
+    def _fake_discover() -> list[str]:
+        return ["_definitely_not_exist_module"]
+
+    monkeypatch.setattr(HealthCheck, "_discover_modules", staticmethod(_fake_discover))
+    checker.results = []
+    checker._check_tools_module("_definitely_not_exist_module", None)
+    out = checker._generate_report(verbose=False)
+    assert "❌" in out, "不存在的模块应被标为失败"
+    assert "🟢 优" not in out, "存在失败项却报告健康状态为优"
 
 
 def test_report_shape_stable() -> None:
